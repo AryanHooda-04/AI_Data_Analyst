@@ -390,7 +390,12 @@ def inject_css() -> None:
             border: 1px solid var(--sidebar-line) !important;
             color: var(--sidebar-ink) !important;
             justify-content: flex-start;
+            align-items: center;
+            gap: 0.38rem;
             min-height: 2.35rem;
+            padding-left: 0.65rem;
+            padding-right: 0.65rem;
+            white-space: nowrap;
             transition: border-color 120ms ease, background 120ms ease, transform 120ms ease;
         }
 
@@ -409,6 +414,10 @@ def inject_css() -> None:
         [data-testid="stSidebar"] .stButton > button svg {
             color: inherit !important;
             fill: currentColor !important;
+        }
+
+        [data-testid="stSidebar"] .stButton > button p {
+            white-space: nowrap;
         }
 
         .app-topbar {
@@ -1520,7 +1529,7 @@ def render_sidebar() -> tuple[pd.DataFrame | None, pd.DataFrame | None, str, str
     navigation = st.session_state["navigation"]
 
     st.sidebar.markdown('<div class="sidebar-section-title">Session tools</div>', unsafe_allow_html=True)
-    tool_cols = st.sidebar.columns(2)
+    tool_cols = st.sidebar.columns([0.9, 1.15])
     tool_cols[0].button("Reset", icon=":material/restart_alt:", on_click=reset_workspace_state, width="stretch")
     tool_cols[1].button("Clear chat", icon=":material/delete_sweep:", on_click=clear_ai_chat, width="stretch")
 

@@ -19,22 +19,32 @@
       margin: 0;
       background: transparent;
       color: var(--ink);
+      min-height: 64px;
+      overflow: hidden;
     }
     .recorder {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       gap: 0.55rem;
-      padding: 0.25rem 0;
+      min-height: 48px;
+      padding: 0.35rem 0 0.45rem;
     }
     button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       min-height: 2.35rem;
+      min-width: 9.25rem;
       border-radius: 6px;
       border: 1px solid var(--border);
       background: var(--panel);
       color: var(--ink);
-      padding: 0.45rem 0.75rem;
+      padding: 0.45rem 0.85rem;
       font-size: 0.92rem;
+      font-weight: 650;
+      line-height: 1.2;
+      white-space: nowrap;
       cursor: pointer;
     }
     button.primary {
@@ -54,6 +64,7 @@
     .status {
       color: var(--muted);
       font-size: 0.86rem;
+      line-height: 1.3;
     }
     .status.recording {
       color: var(--danger);
@@ -67,7 +78,7 @@
 </head>
 <body>
   <div class="recorder">
-    <button id="start" class="primary" type="button">Start voice input</button>
+    <button id="start" class="primary" type="button">Start recording</button>
     <button id="stop" class="danger" type="button" disabled>Stop recording</button>
     <span id="status" class="status">Microphone ready</span>
   </div>
@@ -105,7 +116,18 @@
     function setStatus(text, className = "status") {
       statusEl.textContent = text;
       statusEl.className = className;
-      Streamlit.setFrameHeight(document.body.scrollHeight + 8);
+      updateFrameHeight();
+    }
+
+    function updateFrameHeight() {
+      const recorderEl = document.querySelector(".recorder");
+      const height = Math.max(
+        72,
+        document.documentElement.scrollHeight,
+        document.body.scrollHeight,
+        recorderEl ? recorderEl.offsetHeight + 16 : 72
+      );
+      Streamlit.setFrameHeight(height);
     }
 
     async function startRecording() {
@@ -171,12 +193,17 @@
     stopButton.addEventListener("click", stopRecording);
     window.addEventListener("message", (event) => {
       if (event.data && event.data.type === "streamlit:render") {
-        Streamlit.setFrameHeight(document.body.scrollHeight + 8);
+        updateFrameHeight();
       }
     });
 
     Streamlit.setComponentReady();
-    Streamlit.setFrameHeight(document.body.scrollHeight + 8);
+    if (window.ResizeObserver) {
+      new ResizeObserver(updateFrameHeight).observe(document.body);
+    }
+    window.addEventListener("load", updateFrameHeight);
+    requestAnimationFrame(updateFrameHeight);
+    updateFrameHeight();
   </script>
 </body>
 </html>
