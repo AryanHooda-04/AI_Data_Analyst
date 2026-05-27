@@ -383,14 +383,14 @@ def inject_css() -> None:
             background: var(--panel);
             border: 1px solid var(--panel-border);
             border-radius: 8px;
-            padding: 1rem 1.1rem;
-            margin-bottom: 0.9rem;
+            padding: 0.85rem 1rem;
+            margin-bottom: 0.75rem;
             box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
         }
 
         .app-eyebrow {
             color: var(--muted) !important;
-            font-size: 0.78rem;
+            font-size: 0.72rem;
             font-weight: 720;
             text-transform: uppercase;
             letter-spacing: 0.04em;
@@ -398,7 +398,7 @@ def inject_css() -> None:
 
         .app-title {
             color: var(--ink) !important;
-            font-size: 1.7rem;
+            font-size: 1.45rem;
             line-height: 1.2;
             font-weight: 780;
             margin-top: 0.15rem;
@@ -417,7 +417,7 @@ def inject_css() -> None:
         }
 
         .app-meta-row {
-            margin-top: 0.6rem;
+            margin-top: 0.45rem;
         }
 
         .meta-pill,
@@ -426,8 +426,8 @@ def inject_css() -> None:
             display: inline-flex;
             align-items: center;
             border-radius: 999px;
-            padding: 0.28rem 0.6rem;
-            font-size: 0.78rem;
+            padding: 0.2rem 0.5rem;
+            font-size: 0.73rem;
             font-weight: 680;
             border: 1px solid #cbd5e1;
             background: #f8fafc;
@@ -435,7 +435,7 @@ def inject_css() -> None:
         }
 
         .filter-chip-row {
-            margin: 0.2rem 0 1rem 0;
+            margin: 0 0 0.75rem 0;
         }
 
         .filter-chip {
@@ -453,13 +453,13 @@ def inject_css() -> None:
             background: #ffffff;
             border: 1px solid var(--panel-border);
             border-radius: 8px;
-            padding: 0.9rem 1rem;
-            margin: 0.3rem 0 1.1rem 0;
+            padding: 0.65rem 0.75rem;
+            margin: 0.1rem 0 0.75rem 0;
         }
 
         .workflow-rail {
-            margin-top: 0.9rem;
-            padding-top: 0.85rem;
+            margin-top: 0.35rem;
+            padding-top: 0.45rem;
             border-top: 1px solid var(--panel-border);
         }
 
@@ -471,8 +471,8 @@ def inject_css() -> None:
             background: #f8fafc;
             color: #475569 !important;
             border-radius: 999px;
-            padding: 0.32rem 0.62rem;
-            font-size: 0.78rem;
+            padding: 0.24rem 0.5rem;
+            font-size: 0.72rem;
             font-weight: 700;
         }
 
@@ -487,7 +487,7 @@ def inject_css() -> None:
             justify-content: space-between;
             gap: 1rem;
             align-items: center;
-            margin-bottom: 0.7rem;
+            margin-bottom: 0.4rem;
         }
 
         .readiness-title {
@@ -632,7 +632,7 @@ def inject_css() -> None:
             background: var(--panel);
             border: 1px solid var(--panel-border);
             border-radius: 8px;
-            padding: 0.9rem 1rem;
+            padding: 0.75rem 0.9rem;
             box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
         }
 
@@ -644,6 +644,7 @@ def inject_css() -> None:
         [data-testid="stMetricValue"],
         [data-testid="stMetricValue"] * {
             color: var(--ink) !important;
+            font-size: 1.65rem !important;
         }
 
         .status-pill {
@@ -1469,10 +1470,10 @@ def render_app_topbar(
     active_filters: list[str],
 ) -> None:
     """Render compact app header with source, filters, AI status, and export."""
-    filter_label = f"{len(active_filters)} active filter(s)" if active_filters else "No active filters"
+    filter_label = f"{len(active_filters)} filter(s)" if active_filters else "Unfiltered"
     source = escape(source_name or "Dataset")
     with st.container(border=True):
-        left, right = st.columns([4, 1])
+        left, right = st.columns([5, 1.15], vertical_alignment="center")
         with left:
             st.markdown(
                 f"""
@@ -1480,11 +1481,8 @@ def render_app_topbar(
                 <div class="app-title">Analysis Workspace</div>
                 <div class="app-meta-row">
                     <span class="meta-pill">{source}</span>
-                    <span class="meta-pill">{df.shape[0]:,} of {raw_df.shape[0]:,} rows</span>
+                    <span class="meta-pill">{df.shape[0]:,}/{raw_df.shape[0]:,} rows</span>
                     <span class="meta-pill">{filter_label}</span>
-                    <span class="meta-pill">{ai_status_label()}</span>
-                    <span class="meta-pill">Model: {escape(selected_ai_model())}</span>
-                    <span class="meta-pill">SSL: {escape(openai_ssl_mode())}</span>
                 </div>
                 """,
                 unsafe_allow_html=True,
@@ -1502,12 +1500,9 @@ def render_app_topbar(
 
 def render_filter_chips(active_filters: list[str]) -> None:
     """Display active filters as always-visible chips."""
-    chips = active_filters or ["All source rows"]
-    css_class = "filter-chip" if active_filters else "filter-chip filter-chip-empty"
-    chip_html = "".join(
-        f'<span class="{css_class}">{escape(chip)}</span>'
-        for chip in chips
-    )
+    if not active_filters:
+        return
+    chip_html = "".join(f'<span class="filter-chip">{escape(chip)}</span>' for chip in active_filters)
     st.markdown(f'<div class="filter-chip-row">{chip_html}</div>', unsafe_allow_html=True)
 
 
@@ -1571,7 +1566,7 @@ def render_readiness_panel(df: pd.DataFrame) -> None:
     """Show dataset readiness checks for AI analysis."""
     checks = readiness_checks(df)
     ready_count = sum(1 for item in checks if item["ready"])
-    status = "Ready for AI analysis" if ready_count >= 5 else "Review before AI analysis"
+    status = "Ready" if ready_count >= 5 else "Needs review"
     pill_html = "".join(
         (
             f'<span class="readiness-pill readiness-pill-ready">{escape(str(item["label"]))}: '
@@ -1587,10 +1582,9 @@ def render_readiness_panel(df: pd.DataFrame) -> None:
         <div class="readiness-band">
             <div class="readiness-heading">
                 <div>
-                    <div class="readiness-title">Dataset Readiness</div>
-                    <div class="readiness-subtitle">{status}</div>
+                    <div class="readiness-title">Readiness: {status}</div>
+                    <div class="readiness-subtitle">{ready_count}/{len(checks)} checks passed</div>
                 </div>
-                <span class="status-pill">{ready_count}/{len(checks)} checks passed</span>
             </div>
             <div class="readiness-strip">{pill_html}</div>
         </div>
@@ -1607,23 +1601,25 @@ def render_header(
     *,
     show_readiness: bool = True,
 ) -> None:
-    """Render the app header, filter chips, readiness panel, and KPI row."""
+    """Render the compact app header and KPI row."""
     health = dataset_health(df)
     active_label = "Active rows" if len(df) != len(raw_df) else "Rows"
 
     render_app_topbar(df, raw_df, source_name, active_filters)
-    render_workflow_rail(st.session_state.get("navigation", "Overview"))
     render_filter_chips(active_filters)
-    if show_readiness:
-        render_readiness_panel(df)
+    if show_readiness and st.session_state.get("navigation") == "Overview":
+        with st.expander("Dataset readiness", expanded=False):
+            render_readiness_panel(df)
 
-    col1, col2, col3, col4, col5 = st.columns(5)
+    col1, col2, col3, col4 = st.columns(4)
     col1.metric(active_label, f"{df.shape[0]:,}", help=f"{len(raw_df):,} rows in the source dataset")
     col2.metric("Columns", f"{df.shape[1]:,}")
-    col3.metric("Missing cells", f'{int(health["missing_cells"]):,}', help=f'{health["missing_percent"]}% of active cells')
-    col4.metric("Duplicates", f'{int(health["duplicate_rows"]):,}', help=f'{health["duplicate_percent"]}% of active rows')
-    col5.metric("Health score", f'{int(health["score"])}/100', help=health_label(health["score"]))
-    render_data_story(df)
+    col3.metric(
+        "Quality issues",
+        f'{int(health["missing_cells"]) + int(health["duplicate_rows"]):,}',
+        help=f'{int(health["missing_cells"]):,} missing cells; {int(health["duplicate_rows"]):,} duplicate rows',
+    )
+    col4.metric("Health score", f'{int(health["score"])}/100', help=health_label(health["score"]))
 
 
 def render_insight_cards(df: pd.DataFrame, limit: int = 4) -> None:
@@ -2189,54 +2185,71 @@ def agent_display_name(agent_name: str) -> str:
 
 
 def render_agent_cards(run: PipelineRun) -> None:
-    """Render all known agent statuses as compact cards."""
-    agents = [
-        "DataCleaningAgent",
-        "VerificationAgent",
+    """Render compact stage-level pipeline status cards."""
+    analysis_agents = [
         "TrendAgent",
         "AnomalyAgent",
         "CorrelationAgent",
         "InsightsAgent",
         "VisualizationAgent",
-        "ReportSynthesisAgent",
     ]
-    rows = [agents[index : index + 3] for index in range(0, len(agents), 3)]
-    for row in rows:
-        columns = st.columns(3)
-        for column, agent_name in zip(columns, row):
-            result = run.agent_results.get(agent_name)
-            status = result.status if result else "pending"
-            summary = result.summary if result else "Waiting for this stage."
-            duration = f"{result.duration_seconds}s" if result else "-"
-            with column.container(border=True):
-                st.markdown(f"**{agent_display_name(agent_name)}**")
-                if status == "completed":
-                    st.success(f"Completed - {duration}")
-                elif status == "failed":
-                    st.error(f"Failed - {duration}")
-                else:
-                    st.info("Pending")
-                st.caption(summary)
+    analysis_done = sum(
+        1 for agent in analysis_agents if run.agent_results.get(agent) and run.agent_results[agent].status == "completed"
+    )
+    stages = [
+        ("Cleaning", run.agent_results.get("DataCleaningAgent"), None),
+        ("Verification", run.agent_results.get("VerificationAgent"), None),
+        (
+            "Analysis",
+            None,
+            {
+                "status": "completed" if analysis_done == len(analysis_agents) else "pending",
+                "summary": f"{analysis_done}/{len(analysis_agents)} analysis agents completed",
+            },
+        ),
+        ("Report", run.agent_results.get("ReportSynthesisAgent"), None),
+    ]
+    columns = st.columns(4)
+    for column, (label, result, synthetic) in zip(columns, stages):
+        status = synthetic["status"] if synthetic else result.status if result else "pending"
+        summary = synthetic["summary"] if synthetic else result.summary if result else "Waiting for this stage."
+        duration = "" if synthetic or not result else f" · {result.duration_seconds}s"
+        with column.container(border=True):
+            st.markdown(f"**{label}**")
+            if status == "completed":
+                st.success(f"Complete{duration}")
+            elif status == "failed":
+                st.error(f"Failed{duration}")
+            else:
+                st.info("Pending")
+            st.caption(summary)
 
 
 def render_agent_details(run: PipelineRun) -> None:
-    """Render detailed agent findings in expanders."""
-    for agent_name, result in run.agent_results.items():
-        with st.expander(agent_display_name(agent_name), expanded=False):
-            st.write(result.summary)
-            if result.findings:
-                st.markdown("**Findings**")
-                for finding in result.findings:
-                    st.write(f"- {finding}")
-            if result.metrics:
-                st.markdown("**Metrics**")
-                st.dataframe(
-                    pd.DataFrame(
-                        [{"metric": key, "value": value} for key, value in result.metrics.items()]
-                    ),
-                    width="stretch",
-                    row_height=table_row_height(),
-                )
+    """Render detailed agent findings in one compact expander."""
+    if not run.agent_results:
+        return
+    with st.expander("Agent details", expanded=False):
+        agent_names = list(run.agent_results)
+        selected = st.selectbox(
+            "Agent",
+            agent_names,
+            format_func=agent_display_name,
+            key="pipeline_agent_detail_select",
+        )
+        result = run.agent_results[selected]
+        st.write(result.summary)
+        if result.findings:
+            st.markdown("**Findings**")
+            for finding in result.findings:
+                st.write(f"- {finding}")
+        if result.metrics:
+            st.markdown("**Metrics**")
+            st.dataframe(
+                pd.DataFrame([{"metric": key, "value": value} for key, value in result.metrics.items()]),
+                width="stretch",
+                row_height=table_row_height(),
+            )
 
 
 def render_cleaning_actions(run: PipelineRun) -> None:
@@ -2300,15 +2313,12 @@ def render_pipeline_history() -> None:
 def render_agent_pipeline(df: pd.DataFrame, source_name: str | None) -> None:
     """Render the InsightFlow-style agentic pipeline."""
     st.subheader("Agent Pipeline")
-    st.markdown(
-        '<div class="section-kicker">Run an audited, approval-gated workflow: cleaning, verification, parallel analysis agents, visualization recommendations, and executive report synthesis.</div>',
-        unsafe_allow_html=True,
-    )
+    st.caption("Clean, verify, analyze, and synthesize a report with approval gates.")
 
     run = st.session_state.get("pipeline_run")
     dataset_name = source_name or "Filtered dataset"
 
-    control_cols = st.columns([1.2, 1, 1])
+    control_cols = st.columns([1.1, 1, 3.5], vertical_alignment="center")
     if control_cols[0].button("Start pipeline", icon=":material/play_arrow:", type="primary", width="stretch"):
         with st.spinner("Running cleaning and verification agents..."):
             st.session_state["pipeline_run"] = start_pipeline(df, dataset_name)
@@ -2316,25 +2326,12 @@ def render_agent_pipeline(df: pd.DataFrame, source_name: str | None) -> None:
     if control_cols[1].button("Reset pipeline", icon=":material/restart_alt:", width="stretch"):
         st.session_state["pipeline_run"] = None
         st.rerun()
-    if control_cols[2].download_button(
-        "Download source view",
-        data=df.to_csv(index=False).encode("utf-8"),
-        file_name="pipeline_source_view.csv",
-        mime="text/csv",
-        width="stretch",
-    ):
-        pass
+    control_cols[2].caption(f"Source: {dataset_name} · {df.shape[0]:,} rows · {df.shape[1]:,} columns")
 
     if not isinstance(run, PipelineRun):
-        st.markdown(
-            """
-            <div class="presentation-band">
-                <div class="presentation-heading">InsightFlow-style workflow</div>
-                <div class="muted">Start the pipeline to generate a cleaned-data proposal, verification report, agent findings, chart recommendations, and a downloadable executive report.</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        with st.container(border=True):
+            st.markdown("**Ready to run**")
+            st.caption("The pipeline pauses after cleaning so you can approve the proposal before analysis.")
         with st.expander("Previous pipeline runs", expanded=False):
             render_pipeline_history()
         return
@@ -2342,11 +2339,10 @@ def render_agent_pipeline(df: pd.DataFrame, source_name: str | None) -> None:
     render_agent_cards(run)
     render_agent_details(run)
 
-    stage_cols = st.columns(4)
+    stage_cols = st.columns(3)
     stage_cols[0].metric("Stage", pipeline_stage_label(run.current_stage))
-    stage_cols[1].metric("Raw rows", f"{run.raw_shape[0]:,}")
-    stage_cols[2].metric("Cleaned rows", f"{run.cleaned_shape[0]:,}" if run.cleaned_shape else "-")
-    stage_cols[3].metric("Approval", run.approval_status.value.replace("_", " ").title())
+    stage_cols[1].metric("Rows", f"{run.raw_shape[0]:,}")
+    stage_cols[2].metric("Approval", run.approval_status.value.replace("_", " ").title())
 
     st.subheader("Cleaning Proposal")
     render_cleaning_actions(run)
