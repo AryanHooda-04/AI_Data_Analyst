@@ -254,8 +254,21 @@ def theme_override_css() -> str:
             color: var(--ink) !important;
         }
 
+        header[data-testid="stHeader"],
         [data-testid="stHeader"] {
-            background: rgba(11, 18, 32, 0.78) !important;
+            background: transparent !important;
+            background-color: transparent !important;
+            background-image: none !important;
+            box-shadow: none !important;
+            border-bottom: 0 !important;
+            backdrop-filter: none !important;
+        }
+
+        [data-testid="stHeader"]::before,
+        [data-testid="stHeader"]::after {
+            background: transparent !important;
+            background-image: none !important;
+            box-shadow: none !important;
         }
 
         [data-testid="stBottom"],
@@ -339,6 +352,21 @@ def theme_override_css() -> str:
             background: linear-gradient(135deg, #111827 0%, #0f2238 100%) !important;
         }
 
+        .glossary-grid .glossary-card {
+            background: #111827 !important;
+            border-color: var(--panel-border) !important;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .glossary-grid .glossary-card,
+        .glossary-grid .glossary-card * {
+            color: var(--ink) !important;
+        }
+
+        .glossary-grid .glossary-body {
+            color: #b8c8dc !important;
+        }
+
         .presentation-band {
             background: linear-gradient(135deg, #111827 0%, #0f2238 100%) !important;
             border-color: var(--panel-border) !important;
@@ -396,6 +424,43 @@ def theme_override_css() -> str:
             color: var(--ink) !important;
             fill: currentColor !important;
             stroke: currentColor !important;
+        }
+
+        [data-testid="stChatMessage"] {
+            background: transparent !important;
+            color: var(--ink) !important;
+        }
+
+        [data-testid="stChatMessage"] > div {
+            background: transparent !important;
+        }
+
+        [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"],
+        [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] *,
+        [data-testid="stMarkdownContainer"] p,
+        [data-testid="stMarkdownContainer"] li,
+        [data-testid="stMarkdownContainer"] strong,
+        [data-testid="stMarkdownContainer"] em {
+            color: var(--ink) !important;
+            opacity: 1 !important;
+        }
+
+        [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] p,
+        [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] li {
+            color: #d6e3f4 !important;
+        }
+
+        [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] code,
+        [data-testid="stMarkdownContainer"] code {
+            background: #17233a !important;
+            border: 1px solid var(--panel-border) !important;
+            color: #dbeafe !important;
+        }
+
+        [data-testid="stChatMessage"] [data-testid="stVerticalBlockBorderWrapper"],
+        [data-testid="stChatMessage"] [data-testid="stVerticalBlockBorderWrapper"] > div {
+            background: #111827 !important;
+            border-color: var(--panel-border) !important;
         }
 
         .app-title,
