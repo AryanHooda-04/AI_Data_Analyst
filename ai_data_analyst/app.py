@@ -702,29 +702,57 @@ def inject_css() -> None:
             background: #ffffff;
             border: 1px solid var(--panel-border);
             border-radius: 8px;
-            padding: 1.3rem;
-            max-width: 860px;
+            padding: 1.35rem 1.45rem;
+            max-width: 760px;
+            margin: 1.1rem auto 0;
+            box-shadow: var(--shadow-sm);
         }
 
         .empty-title {
             color: var(--ink) !important;
-            font-size: 1.8rem;
+            font-size: 1.65rem;
             font-weight: 780;
             line-height: 1.2;
+            margin-top: 0.25rem;
         }
 
-        .empty-grid {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 0.75rem;
-            margin-top: 1rem;
+        .empty-lead {
+            color: var(--muted) !important;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            max-width: 620px;
+            margin-top: 0.45rem;
         }
 
-        .empty-item {
-            border: 1px solid var(--panel-border);
-            border-radius: 8px;
-            padding: 0.85rem;
+        .empty-steps {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.45rem;
+            margin-top: 0.95rem;
+        }
+
+        .empty-steps span {
+            display: inline-flex;
+            align-items: center;
+            border: 1px solid #dbe7f3;
             background: #f8fafc;
+            border-radius: 999px;
+            color: #475569 !important;
+            font-size: 0.78rem;
+            font-weight: 700;
+            padding: 0.28rem 0.6rem;
+        }
+
+        .st-key-empty_actions {
+            max-width: 760px;
+            margin: 0.75rem auto 0;
+        }
+
+        .st-key-empty_actions .stButton > button {
+            min-height: 2.45rem;
+            border-radius: 8px;
+            padding-left: 0.9rem;
+            padding-right: 0.9rem;
         }
 
         .empty-item-title,
@@ -2805,30 +2833,22 @@ def render_empty_state(load_error: str | None = None) -> None:
         <div class="empty-workspace">
             <div class="app-eyebrow">AI Data Analyst</div>
             <div class="empty-title">Start with a dataset</div>
-            <div class="muted">Upload a CSV or Excel workbook from the sidebar, or load the bundled sample dataset for a guided demo.</div>
-            <div class="empty-grid">
-                <div class="empty-item">
-                    <div class="empty-item-title">Supported files</div>
-                    <div class="muted">CSV and XLSX files up to Streamlit's configured upload limit.</div>
-                </div>
-                <div class="empty-item">
-                    <div class="empty-item-title">Private by default</div>
-                    <div class="muted">Local exploration works offline. AI features only send compact schema and sample context.</div>
-                </div>
-                <div class="empty-item">
-                    <div class="empty-item-title">Workflow</div>
-                    <div class="muted">Load data, inspect readiness, chat with Conversation AI, build charts, review anomalies, then export code.</div>
-                </div>
+            <div class="empty-lead">Upload a CSV or Excel workbook from the sidebar, or try the sample dataset to explore the workspace.</div>
+            <div class="empty-steps">
+                <span>CSV and XLSX</span>
+                <span>Local preview</span>
+                <span>AI-assisted analysis</span>
             </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
-    if load_error:
-        st.error(load_error)
-    if st.button("Load sample dataset", icon=":material/table_chart:", type="primary"):
-        st.session_state["use_sample_dataset"] = True
-        st.rerun()
+    with st.container(key="empty_actions"):
+        if load_error:
+            st.error(load_error)
+        if st.button("Load sample dataset", icon=":material/table_chart:", type="primary"):
+            st.session_state["use_sample_dataset"] = True
+            st.rerun()
 
 
 def main() -> None:
