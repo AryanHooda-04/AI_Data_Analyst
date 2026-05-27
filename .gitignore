@@ -1,0 +1,17 @@
+**/.env
+**/.streamlit/secrets.toml
+**/__pycache__/
+**/*.py[cod]
+**/*.log
+.venv/
+venv/
+env/
+
+# Local Streamlit/browser verification artifacts
+ai_data_analyst/browser_check*.png
+ai_data_analyst/browser_debug.png
+ai_data_analyst/correlation_*.png
+ai_data_analyst/sidebar_*.png
+ai_data_analyst/uiux_*.png
+ai_data_analyst/ux_*.png
+ai_data_analyst/voice_*check*.png

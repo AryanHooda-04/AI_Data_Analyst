@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --ink: #111827;
+      --muted: #5b6472;
+      --border: #cbd5e1;
+      --panel: #ffffff;
+      --accent: #2563eb;
+      --danger: #dc2626;
+      --success: #15803d;
+    }
+    body {
+      margin: 0;
+      background: transparent;
+      color: var(--ink);
+    }
+    .recorder {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.55rem;
+      padding: 0.25rem 0;
+    }
+    button {
+      min-height: 2.35rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--ink);
+      padding: 0.45rem 0.75rem;
+      font-size: 0.92rem;
+      cursor: pointer;
+    }
+    button.primary {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #ffffff;
+    }
+    button.danger {
+      border-color: var(--danger);
+      background: var(--danger);
+      color: #ffffff;
+    }
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+    .status {
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+    .status.recording {
+      color: var(--danger);
+      font-weight: 700;
+    }
+    .status.ready {
+      color: var(--success);
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <div class="recorder">
+    <button id="start" class="primary" type="button">Start voice input</button>
+    <button id="stop" class="danger" type="button" disabled>Stop recording</button>
+    <span id="status" class="status">Microphone ready</span>
+  </div>
+  <script>
+    const Streamlit = {
+      setComponentReady() {
+        window.parent.postMessage({ isStreamlitMessage: true, type: "streamlit:componentReady", apiVersion: 1 }, "*");
+      },
+      setFrameHeight(height) {
+        window.parent.postMessage({ isStreamlitMessage: true, type: "streamlit:setFrameHeight", height }, "*");
+      },
+      setComponentValue(value) {
+        window.parent.postMessage({ isStreamlitMessage: true, type: "streamlit:setComponentValue", value }, "*");
+      },
+    };
+
+    const startButton = document.getElementById("start");
+    const stopButton = document.getElementById("stop");
+    const statusEl = document.getElementById("status");
+    let recorder = null;
+    let chunks = [];
+    let startedAt = 0;
+    let stream = null;
+
+    function bestMimeType() {
+      const options = [
+        "audio/webm;codecs=opus",
+        "audio/webm",
+        "audio/mp4",
+        "audio/wav",
+      ];
+      return options.find((type) => window.MediaRecorder && MediaRecorder.isTypeSupported(type)) || "";
+    }
+
+    function setStatus(text, className = "status") {
+      statusEl.textContent = text;
+      statusEl.className = className;
+      Streamlit.setFrameHeight(document.body.scrollHeight + 8);
+    }
+
+    async function startRecording() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) {
+        setStatus("Microphone recording is not supported in this browser.");
+        return;
+      }
+
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        chunks = [];
+        const mimeType = bestMimeType();
+        recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+        startedAt = Date.now();
+
+        recorder.ondataavailable = (event) => {
+          if (event.data && event.data.size > 0) {
+            chunks.push(event.data);
+          }
+        };
+
+        recorder.onstop = () => {
+          const blob = new Blob(chunks, { type: recorder.mimeType || "audio/webm" });
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const mime = blob.type || "audio/webm";
+            const extension = mime.includes("mp4") ? "mp4" : mime.includes("wav") ? "wav" : "webm";
+            Streamlit.setComponentValue({
+              dataUrl: reader.result,
+              mimeType: mime,
+              filename: `voice_input.${extension}`,
+              size: blob.size,
+              durationSeconds: Math.round((Date.now() - startedAt) / 1000),
+              capturedAt: new Date().toISOString(),
+            });
+            setStatus(`Recording ready (${Math.round(blob.size / 1024)} KB)`, "status ready");
+          };
+          reader.readAsDataURL(blob);
+          if (stream) {
+            stream.getTracks().forEach((track) => track.stop());
+            stream = null;
+          }
+        };
+
+        recorder.start();
+        startButton.disabled = true;
+        stopButton.disabled = false;
+        setStatus("Recording...", "status recording");
+      } catch (error) {
+        setStatus(error && error.message ? error.message : "Microphone permission was not granted.");
+      }
+    }
+
+    function stopRecording() {
+      if (recorder && recorder.state !== "inactive") {
+        recorder.stop();
+      }
+      startButton.disabled = false;
+      stopButton.disabled = true;
+    }
+
+    startButton.addEventListener("click", startRecording);
+    stopButton.addEventListener("click", stopRecording);
+    window.addEventListener("message", (event) => {
+      if (event.data && event.data.type === "streamlit:render") {
+        Streamlit.setFrameHeight(document.body.scrollHeight + 8);
+      }
+    });
+
+    Streamlit.setComponentReady();
+    Streamlit.setFrameHeight(document.body.scrollHeight + 8);
+  </script>
+</body>
+</html>
