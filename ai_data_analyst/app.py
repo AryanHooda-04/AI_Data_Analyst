@@ -294,6 +294,25 @@ def theme_override_css() -> str:
             box-shadow: 0 -18px 44px rgba(16, 32, 51, 0.10) !important;
         }
 
+        [data-testid="stBottom"]::before,
+        [data-testid="stBottom"]::after,
+        [data-testid="stBottomBlockContainer"]::before,
+        [data-testid="stBottomBlockContainer"]::after,
+        [data-testid="stChatFloatingInputContainer"]::before,
+        [data-testid="stChatFloatingInputContainer"]::after {
+            background: transparent !important;
+            background-image: none !important;
+        }
+
+        [data-testid="stBottom"] > div,
+        [data-testid="stBottomBlockContainer"] > div,
+        [data-testid="stChatFloatingInputContainer"] > div,
+        div:has(> [data-testid="stChatInput"]) {
+            background: #f6f9fd !important;
+            background-color: #f6f9fd !important;
+            background-image: none !important;
+        }
+
         [data-testid="stSidebar"] {
             background: linear-gradient(180deg, #ffffff 0%, #f3f8ff 54%, #f8fbff 100%) !important;
             border-right-color: var(--sidebar-line) !important;
@@ -515,6 +534,62 @@ def theme_override_css() -> str:
         [data-testid="stMetric"] {
             background: #ffffff !important;
             border-color: var(--panel-border) !important;
+        }
+
+        [data-testid="stChatMessage"] {
+            background: transparent !important;
+            color: var(--ink) !important;
+        }
+
+        [data-testid="stChatMessage"] > div {
+            background: transparent !important;
+        }
+
+        [data-testid="stChatMessage"]:has([aria-label="Chat message from user"]) {
+            background: linear-gradient(135deg, #f2f8ff 0%, #eefbf7 100%) !important;
+            border: 1px solid #c9ddf4 !important;
+            border-radius: 10px !important;
+            box-shadow: var(--shadow-sm) !important;
+        }
+
+        [data-testid="stChatMessage"]:has([aria-label="Chat message from user"]) [data-testid="stMarkdownContainer"],
+        [data-testid="stChatMessage"]:has([aria-label="Chat message from user"]) [data-testid="stMarkdownContainer"] * {
+            color: var(--ink) !important;
+            opacity: 1 !important;
+        }
+
+        [data-testid="stChatMessage"] [data-testid="stVerticalBlockBorderWrapper"],
+        [data-testid="stChatMessage"] [data-testid="stVerticalBlockBorderWrapper"] > div {
+            background: #ffffff !important;
+            border-color: var(--panel-border) !important;
+        }
+
+        [data-testid="stChatInput"] {
+            background: #ffffff !important;
+            background-color: #ffffff !important;
+            background-image: none !important;
+            border: 1px solid #c9d2e3 !important;
+            border-radius: 10px !important;
+            box-shadow: 0 14px 34px rgba(16, 32, 51, 0.10) !important;
+        }
+
+        [data-testid="stChatInput"] > div,
+        [data-testid="stChatInput"] form,
+        [data-testid="stChatInput"] [data-baseweb="textarea"],
+        [data-testid="stChatInput"] [data-baseweb="base-input"],
+        [data-testid="stChatInput"] [data-baseweb="base-input"] > div {
+            background: #ffffff !important;
+            background-color: #ffffff !important;
+            background-image: none !important;
+            border-color: transparent !important;
+        }
+
+        [data-testid="stChatInput"] button,
+        [data-testid="stChatInput"] button * {
+            background: #e8f1ff !important;
+            color: var(--accent) !important;
+            fill: currentColor !important;
+            stroke: currentColor !important;
         }
 
         .meta-pill,
