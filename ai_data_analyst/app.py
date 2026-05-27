@@ -160,15 +160,15 @@ def asset_data_uri(path: Path, mime_type: str) -> str:
 
 
 STREAMLIT_DEMO_MODE = env_flag("STREAMLIT_DEMO_MODE", True)
-DEMO_AI_CALL_LIMIT = env_int("DEMO_AI_CALL_LIMIT", 6, minimum=1)
-DEMO_SESSION_TOKEN_BUDGET = env_int("DEMO_SESSION_TOKEN_BUDGET", 8_000, minimum=1_000)
-DEMO_CONTEXT_CHAR_LIMIT = env_int("DEMO_CONTEXT_CHAR_LIMIT", 5_000, minimum=1_000)
-DEMO_MAX_REQUEST_CHARS = env_int("DEMO_MAX_REQUEST_CHARS", 1_200, minimum=200)
-DEMO_TEXT_OUTPUT_TOKENS = env_int("DEMO_TEXT_OUTPUT_TOKENS", 550, minimum=128)
-DEMO_CODE_OUTPUT_TOKENS = env_int("DEMO_CODE_OUTPUT_TOKENS", 700, minimum=128)
-DEMO_TRANSCRIPTION_TOKEN_COST = env_int("DEMO_TRANSCRIPTION_TOKEN_COST", 300, minimum=50)
-DEMO_TTS_CHAR_LIMIT = env_int("DEMO_TTS_CHAR_LIMIT", 1_200, minimum=200)
-DEMO_MAX_AUDIO_MB = env_int("DEMO_MAX_AUDIO_MB", 2, minimum=1)
+DEMO_AI_CALL_LIMIT = env_int("DEMO_AI_CALL_LIMIT", 18, minimum=1)
+DEMO_SESSION_TOKEN_BUDGET = env_int("DEMO_SESSION_TOKEN_BUDGET", 80_000, minimum=1_000)
+DEMO_CONTEXT_CHAR_LIMIT = env_int("DEMO_CONTEXT_CHAR_LIMIT", 12_000, minimum=1_000)
+DEMO_MAX_REQUEST_CHARS = env_int("DEMO_MAX_REQUEST_CHARS", 3_000, minimum=200)
+DEMO_TEXT_OUTPUT_TOKENS = env_int("DEMO_TEXT_OUTPUT_TOKENS", 1_200, minimum=128)
+DEMO_CODE_OUTPUT_TOKENS = env_int("DEMO_CODE_OUTPUT_TOKENS", 1_800, minimum=128)
+DEMO_TRANSCRIPTION_TOKEN_COST = env_int("DEMO_TRANSCRIPTION_TOKEN_COST", 500, minimum=50)
+DEMO_TTS_CHAR_LIMIT = env_int("DEMO_TTS_CHAR_LIMIT", 3_000, minimum=200)
+DEMO_MAX_AUDIO_MB = env_int("DEMO_MAX_AUDIO_MB", 8, minimum=1)
 DEMO_MAX_AUDIO_BYTES = DEMO_MAX_AUDIO_MB * 1024 * 1024
 TOKEN_CHARS_ESTIMATE = 4
 
@@ -1123,7 +1123,7 @@ def ask_output_tokens() -> int:
 
 def code_output_tokens() -> int:
     """Return the code-generation answer token cap for the current mode."""
-    return DEMO_CODE_OUTPUT_TOKENS if demo_mode_enabled() else 1_400
+    return DEMO_CODE_OUTPUT_TOKENS if demo_mode_enabled() else 2_000
 
 
 def demo_tokens_used() -> int:

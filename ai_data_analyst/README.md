@@ -19,8 +19,8 @@ OPENAI_API_KEY=your_openai_api_key_here
 OPENAI_SSL=insecure
 OPENAI_MODEL=gpt-5.2
 STREAMLIT_DEMO_MODE=true
-DEMO_AI_CALL_LIMIT=6
-DEMO_SESSION_TOKEN_BUDGET=8000
+DEMO_AI_CALL_LIMIT=18
+DEMO_SESSION_TOKEN_BUDGET=80000
 ```
 
 ## Modules
@@ -113,14 +113,15 @@ This is useful in local corporate environments where SSL inspection blocks API c
 
 Demo mode is enabled by default for Streamlit Community Cloud. It limits public usage to keep API costs predictable:
 
-- Per-session AI calls: `DEMO_AI_CALL_LIMIT`, default `6`.
-- Per-session estimated token budget: `DEMO_SESSION_TOKEN_BUDGET`, default `8000`.
-- Conversation AI output cap: `DEMO_TEXT_OUTPUT_TOKENS`, default `550`.
-- Code Generator output cap: `DEMO_CODE_OUTPUT_TOKENS`, default `700`.
-- Dataset context cap: `DEMO_CONTEXT_CHAR_LIMIT`, default `5000` characters.
-- Prompt length cap: `DEMO_MAX_REQUEST_CHARS`, default `1200` characters.
-- Voice output input cap: `DEMO_TTS_CHAR_LIMIT`, default `1200` characters.
-- Audio transcription upload cap: `DEMO_MAX_AUDIO_MB`, default `2` MB.
+- Per-session AI calls: `DEMO_AI_CALL_LIMIT`, default `18`.
+- Per-session estimated token budget: `DEMO_SESSION_TOKEN_BUDGET`, default `80000`.
+- Conversation AI output cap: `DEMO_TEXT_OUTPUT_TOKENS`, default `1200`.
+- Code Generator output cap: `DEMO_CODE_OUTPUT_TOKENS`, default `1800`.
+- Dataset context cap: `DEMO_CONTEXT_CHAR_LIMIT`, default `12000` characters.
+- Prompt length cap: `DEMO_MAX_REQUEST_CHARS`, default `3000` characters.
+- Voice transcription estimate: `DEMO_TRANSCRIPTION_TOKEN_COST`, default `500`.
+- Voice output input cap: `DEMO_TTS_CHAR_LIMIT`, default `3000` characters.
+- Audio transcription upload cap: `DEMO_MAX_AUDIO_MB`, default `8` MB.
 
 Set `STREAMLIT_DEMO_MODE=false` for private local use if you do not want these demo caps.
 
