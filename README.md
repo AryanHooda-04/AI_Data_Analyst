@@ -12,7 +12,7 @@ The app is designed as a demo-ready mini analytics platform: upload a CSV or Exc
 
 The app is deployed on Streamlit Community Cloud:
 
-https://aidataanalyst-bfnglhzlgw6xyycnwarzrc.streamlit.app/
+https://insightanalytica.streamlit.app/
 
 ## Highlights
 
