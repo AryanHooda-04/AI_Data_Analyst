@@ -138,6 +138,7 @@ TRANSCRIPTION_OPTIONS = [
 ]
 
 DEMO_REASONING_OPTIONS = ["none", "low"]
+THEME_OPTIONS = ["Light", "Dark"]
 
 
 def env_flag(name: str, default: bool) -> bool:
@@ -162,6 +163,209 @@ def asset_data_uri(path: Path, mime_type: str) -> str:
         return ""
     encoded = base64.b64encode(path.read_bytes()).decode("ascii")
     return f"data:{mime_type};base64,{encoded}"
+
+
+def active_theme_mode() -> str:
+    """Return the selected display theme."""
+    mode = st.session_state.get("theme_mode", "Light")
+    return mode if mode in THEME_OPTIONS else "Light"
+
+
+def theme_css_variables() -> str:
+    """Return CSS custom properties for the active app theme."""
+    if active_theme_mode() == "Dark":
+        return """
+            color-scheme: dark;
+            --app-bg: #0b1220;
+            --panel: #111827;
+            --panel-soft: #0f172a;
+            --panel-border: #26374f;
+            --ink: #e7eef8;
+            --muted: #9fb0c5;
+            --sidebar-bg: #0b1220;
+            --sidebar-panel: #111827;
+            --sidebar-line: #26374f;
+            --sidebar-ink: #e7eef8;
+            --sidebar-muted: #9fb0c5;
+            --accent: #38bdf8;
+            --accent-2: #22c55e;
+            --accent-3: #fb7185;
+            --accent-warm: #fbbf24;
+            --accent-soft: #0d2a48;
+            --success: #34d399;
+            --warning: #fbbf24;
+            --danger: #fb7185;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.24);
+            --shadow-md: 0 18px 42px rgba(0, 0, 0, 0.28);
+        """
+    return """
+            color-scheme: light;
+            --app-bg: #f4f7fb;
+            --panel: #ffffff;
+            --panel-soft: #f9fbff;
+            --panel-border: #d9e4f2;
+            --ink: #102033;
+            --muted: #63748a;
+            --sidebar-bg: #f8fbff;
+            --sidebar-panel: #ffffff;
+            --sidebar-line: #d7e4f1;
+            --sidebar-ink: #102033;
+            --sidebar-muted: #64748b;
+            --accent: #1d4ed8;
+            --accent-2: #0891b2;
+            --accent-3: #e11d48;
+            --accent-warm: #f59e0b;
+            --accent-soft: #e8f1ff;
+            --success: #0f8a55;
+            --warning: #b45309;
+            --danger: #b91c1c;
+            --shadow-sm: 0 1px 2px rgba(16, 32, 51, 0.06);
+            --shadow-md: 0 12px 30px rgba(16, 32, 51, 0.08);
+        """
+
+
+def theme_override_css() -> str:
+    """Return targeted overrides for hard-coded light UI rules."""
+    if active_theme_mode() != "Dark":
+        return ""
+    return """
+        [data-testid="stAppViewContainer"],
+        [data-testid="stAppViewContainer"] > .main,
+        .stApp {
+            background:
+                radial-gradient(circle at 12% 0%, rgba(56, 189, 248, 0.13), transparent 32%),
+                linear-gradient(180deg, #0b1220 0%, #0f172a 100%) !important;
+            color: var(--ink) !important;
+        }
+
+        [data-testid="stSidebar"] {
+            background: linear-gradient(180deg, #0b1220 0%, #111827 54%, #0f172a 100%) !important;
+            border-right-color: var(--sidebar-line) !important;
+            box-shadow: 4px 0 28px rgba(0, 0, 0, 0.28);
+        }
+
+        [data-testid="stSidebar"] [data-testid="stFileUploader"] section,
+        [data-testid="stSidebar"] [data-testid="stExpander"],
+        [data-testid="stSidebar"] [data-testid="stExpander"] details,
+        [data-testid="stSidebar"] [data-testid="stExpander"] summary,
+        .sidebar-card,
+        .readiness-band,
+        .insight-card,
+        .data-story-card,
+        .conversation-empty,
+        .empty-workspace,
+        .topbar-command-panel,
+        .st-key-top_workspace_nav,
+        [data-testid="stVerticalBlockBorderWrapper"] {
+            background: var(--panel) !important;
+            border-color: var(--panel-border) !important;
+        }
+
+        .brand-mark,
+        .sidebar-brand-logo,
+        .app-logo-card {
+            background: linear-gradient(135deg, #082f49 0%, #0f172a 100%) !important;
+            border-color: #24506d !important;
+            box-shadow: 0 14px 28px rgba(56, 189, 248, 0.14);
+        }
+
+        .topbar-command-panel,
+        .empty-workspace {
+            background: linear-gradient(135deg, #111827 0%, #0f2238 100%) !important;
+        }
+
+        .app-title,
+        .sidebar-brand-title,
+        .sidebar-card-value,
+        .data-story-value,
+        .readiness-title,
+        .conversation-empty-title,
+        .empty-title,
+        .ai-response-card-title,
+        h1, h2, h3, h4, h5, h6 {
+            color: var(--ink) !important;
+        }
+
+        .app-subtitle,
+        .sidebar-brand-subtitle,
+        .sidebar-card-meta,
+        .sidebar-card-title,
+        .section-kicker,
+        .conversation-empty-body,
+        .empty-lead,
+        [data-testid="stCaptionContainer"] *,
+        small {
+            color: var(--muted) !important;
+        }
+
+        .meta-pill,
+        .filter-chip,
+        .readiness-pill,
+        .status-pill,
+        .workflow-step,
+        .empty-steps span {
+            background: #0d2a48 !important;
+            border-color: #28577a !important;
+            color: #d9ecff !important;
+        }
+
+        .readiness-pill-ready {
+            background: rgba(34, 197, 94, 0.12) !important;
+            border-color: rgba(34, 197, 94, 0.36) !important;
+            color: #a7f3d0 !important;
+        }
+
+        .readiness-pill-warn {
+            background: rgba(251, 191, 36, 0.12) !important;
+            border-color: rgba(251, 191, 36, 0.36) !important;
+            color: #fde68a !important;
+        }
+
+        .stButton > button,
+        .stDownloadButton > button,
+        [data-testid="stSidebar"] .stButton > button,
+        [data-testid="stSidebar"] [data-testid="stFileUploader"] button,
+        [data-testid="stSidebar"] .stDownloadButton button,
+        .st-key-top_workspace_nav .stButton > button {
+            background: #111827 !important;
+            border-color: var(--panel-border) !important;
+            color: var(--ink) !important;
+        }
+
+        .stButton > button:hover,
+        .stDownloadButton > button:hover,
+        [data-testid="stSidebar"] .stButton > button:hover,
+        .st-key-top_workspace_nav .stButton > button:hover {
+            background: #17233a !important;
+            border-color: #3b82f6 !important;
+            box-shadow: 0 10px 22px rgba(56, 189, 248, 0.12);
+        }
+
+        .stButton > button[kind="primary"],
+        [data-testid="stSidebar"] .stButton > button[kind="primary"],
+        .st-key-top_workspace_nav .stButton > button[kind="primary"] {
+            background: linear-gradient(90deg, #2563eb, #0891b2) !important;
+            border-color: transparent !important;
+            color: #ffffff !important;
+        }
+
+        input,
+        textarea,
+        [data-baseweb="select"] > div,
+        [data-testid="stSelectbox"] div,
+        [data-testid="stMultiSelect"] div {
+            background-color: #0f172a !important;
+            color: var(--ink) !important;
+            border-color: var(--panel-border) !important;
+        }
+
+        [data-testid="stDataFrame"],
+        [data-testid="stTable"],
+        [data-testid="stMetric"],
+        [data-testid="stMetric"] div {
+            color: var(--ink) !important;
+        }
+    """
 
 
 STREAMLIT_DEMO_MODE = env_flag("STREAMLIT_DEMO_MODE", True)
@@ -192,28 +396,7 @@ def inject_css() -> None:
         """
         <style>
         :root {
-            color-scheme: light;
-            --app-bg: #f4f7fb;
-            --panel: #ffffff;
-            --panel-soft: #f9fbff;
-            --panel-border: #d9e4f2;
-            --ink: #102033;
-            --muted: #63748a;
-            --sidebar-bg: #f8fbff;
-            --sidebar-panel: #ffffff;
-            --sidebar-line: #d7e4f1;
-            --sidebar-ink: #102033;
-            --sidebar-muted: #64748b;
-            --accent: #1d4ed8;
-            --accent-2: #0891b2;
-            --accent-3: #e11d48;
-            --accent-warm: #f59e0b;
-            --accent-soft: #e8f1ff;
-            --success: #0f8a55;
-            --warning: #b45309;
-            --danger: #b91c1c;
-            --shadow-sm: 0 1px 2px rgba(16, 32, 51, 0.06);
-            --shadow-md: 0 12px 30px rgba(16, 32, 51, 0.08);
+        """ + theme_css_variables() + """
         }
 
         @keyframes page-rise {
@@ -1203,6 +1386,7 @@ def inject_css() -> None:
                 grid-template-columns: 1fr;
             }
         }
+        """ + theme_override_css() + """
         </style>
         """,
         unsafe_allow_html=True,
@@ -1238,6 +1422,7 @@ def initialize_state() -> None:
         "last_voice_audio": None,
         "last_transcript": "",
         "table_density": "Comfortable",
+        "theme_mode": "Light",
         "show_term_glossary": True,
         "demo_ai_calls": 0,
         "demo_estimated_tokens": 0,
@@ -1824,6 +2009,15 @@ def render_sidebar() -> tuple[pd.DataFrame | None, pd.DataFrame | None, str, str
     tool_cols = st.sidebar.columns([0.9, 1.15])
     tool_cols[0].button("Reset", icon=":material/restart_alt:", on_click=reset_workspace_state, width="stretch")
     tool_cols[1].button("Clear chat", icon=":material/delete_sweep:", on_click=clear_ai_chat, width="stretch")
+
+    st.sidebar.markdown('<div class="sidebar-section-title">Display</div>', unsafe_allow_html=True)
+    st.sidebar.radio(
+        "Theme",
+        THEME_OPTIONS,
+        key="theme_mode",
+        horizontal=True,
+        label_visibility="collapsed",
+    )
 
     st.sidebar.markdown('<div class="sidebar-section-title">AI status</div>', unsafe_allow_html=True)
     st.sidebar.selectbox("GPT model", MODEL_OPTIONS, key="model_choice")
@@ -3120,8 +3314,8 @@ def render_empty_state(load_error: str | None = None) -> None:
 
 def main() -> None:
     """Run the Streamlit app."""
-    inject_css()
     initialize_state()
+    inject_css()
 
     raw_df, filtered_df, navigation, source_name, load_error, active_filters = render_sidebar()
 
