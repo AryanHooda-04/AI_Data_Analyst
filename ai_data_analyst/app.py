@@ -53,6 +53,16 @@ NAV_ITEMS = [
     {"label": "Presentation Mode", "icon": ":material/present_to_all:"},
 ]
 
+PAGE_COPY = {
+    "Overview": ("Overview", "Dataset health, preview, and core quality checks."),
+    "Ask AI": ("Ask AI", "Ask focused questions and review structured answers."),
+    "Visualizations": ("Visualizations", "Build charts from the active dataset view."),
+    "Insights & Anomalies": ("Insights", "Review patterns, quality signals, and anomalies."),
+    "Agent Pipeline": ("Agent Pipeline", "Clean, verify, analyze, and synthesize a report."),
+    "Code Generator": ("Code Generator", "Generate SQL and Pandas from a plain-language request."),
+    "Presentation Mode": ("Presentation", "A clean executive view for demos and walkthroughs."),
+}
+
 SUGGESTED_QUESTIONS = [
     "What are the three most important patterns in this dataset?",
     "Which segments are underperforming and what might explain that?",
@@ -169,19 +179,23 @@ def inject_css() -> None:
         <style>
         :root {
             color-scheme: light;
-            --app-bg: #f6f8fc;
+            --app-bg: #f5f7fb;
             --panel: #ffffff;
-            --panel-border: #dfe5ef;
-            --ink: #111827;
-            --muted: #5b6472;
-            --sidebar-bg: #0f172a;
-            --sidebar-panel: #111c31;
-            --sidebar-line: #26364f;
+            --panel-soft: #f8fafc;
+            --panel-border: #e1e7f0;
+            --ink: #0f172a;
+            --muted: #64748b;
+            --sidebar-bg: #0b1220;
+            --sidebar-panel: #101b2f;
+            --sidebar-line: #24324a;
             --sidebar-ink: #f8fafc;
             --sidebar-muted: #aab5c8;
             --accent: #2563eb;
             --accent-soft: #dbeafe;
             --success: #15803d;
+            --warning: #b45309;
+            --danger: #b91c1c;
+            --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
         }
 
         header[data-testid="stHeader"] {
@@ -200,9 +214,9 @@ def inject_css() -> None:
         }
 
         .block-container {
-            padding-top: 1.1rem;
+            padding-top: 0.85rem;
             padding-bottom: 2.5rem;
-            max-width: 1280px;
+            max-width: 1180px;
         }
 
         h1, h2, h3, h4, h5, h6, p, label, span, div {
@@ -214,6 +228,17 @@ def inject_css() -> None:
             font-weight: 750 !important;
         }
 
+        h2 {
+            font-size: 1.45rem !important;
+            margin-top: 1.25rem !important;
+            margin-bottom: 0.35rem !important;
+        }
+
+        h3 {
+            font-size: 1.1rem !important;
+            margin-top: 1rem !important;
+        }
+
         p, label, span, div {
             color: inherit;
         }
@@ -221,10 +246,11 @@ def inject_css() -> None:
         [data-testid="stSidebar"] {
             background: var(--sidebar-bg) !important;
             border-right: 1px solid var(--sidebar-line);
+            box-shadow: 1px 0 0 rgba(15, 23, 42, 0.04);
         }
 
         [data-testid="stSidebar"] > div {
-            padding-top: 1.35rem;
+            padding-top: 1.1rem;
         }
 
         [data-testid="stSidebar"] * {
@@ -244,9 +270,9 @@ def inject_css() -> None:
         }
 
         .sidebar-brand {
-            padding: 0 0 1rem 0;
+            padding: 0 0 0.85rem 0;
             border-bottom: 1px solid var(--sidebar-line);
-            margin-bottom: 1rem;
+            margin-bottom: 0.85rem;
         }
 
         .sidebar-brand-title {
@@ -268,15 +294,15 @@ def inject_css() -> None:
             font-weight: 760;
             letter-spacing: 0.04em;
             text-transform: uppercase;
-            margin: 1.05rem 0 0.45rem 0;
+            margin: 0.9rem 0 0.4rem 0;
         }
 
         .sidebar-card {
             background: var(--sidebar-panel);
             border: 1px solid var(--sidebar-line);
             border-radius: 8px;
-            padding: 0.8rem 0.9rem;
-            margin: 0.35rem 0 0.75rem 0;
+            padding: 0.7rem 0.8rem;
+            margin: 0.3rem 0 0.65rem 0;
         }
 
         .sidebar-card-title {
@@ -302,7 +328,7 @@ def inject_css() -> None:
             background: #0b1220 !important;
             border: 1px dashed #3b4a63 !important;
             border-radius: 8px !important;
-            padding: 0.85rem !important;
+            padding: 0.75rem !important;
         }
 
         [data-testid="stSidebar"] [data-testid="stFileUploader"] button {
@@ -364,7 +390,13 @@ def inject_css() -> None:
             border: 1px solid var(--sidebar-line) !important;
             color: var(--sidebar-ink) !important;
             justify-content: flex-start;
-            min-height: 2.5rem;
+            min-height: 2.35rem;
+            transition: border-color 120ms ease, background 120ms ease, transform 120ms ease;
+        }
+
+        [data-testid="stSidebar"] .stButton > button:hover {
+            background: #17233a !important;
+            border-color: #36506f !important;
         }
 
         [data-testid="stSidebar"] .stButton > button[kind="primary"] {
@@ -385,7 +417,7 @@ def inject_css() -> None:
             border-radius: 8px;
             padding: 0.85rem 1rem;
             margin-bottom: 0.75rem;
-            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+            box-shadow: var(--shadow-sm);
         }
 
         .app-eyebrow {
@@ -402,6 +434,12 @@ def inject_css() -> None:
             line-height: 1.2;
             font-weight: 780;
             margin-top: 0.15rem;
+        }
+
+        .app-subtitle {
+            color: var(--muted) !important;
+            font-size: 0.86rem;
+            margin-top: 0.18rem;
         }
 
         .app-meta-row,
@@ -430,7 +468,7 @@ def inject_css() -> None:
             font-size: 0.73rem;
             font-weight: 680;
             border: 1px solid #cbd5e1;
-            background: #f8fafc;
+            background: var(--panel-soft);
             color: #334155 !important;
         }
 
@@ -455,6 +493,7 @@ def inject_css() -> None:
             border-radius: 8px;
             padding: 0.65rem 0.75rem;
             margin: 0.1rem 0 0.75rem 0;
+            box-shadow: var(--shadow-sm);
         }
 
         .workflow-rail {
@@ -524,17 +563,17 @@ def inject_css() -> None:
             background: #ffffff;
             border: 1px solid var(--panel-border);
             border-radius: 8px;
-            padding: 0.8rem 0.9rem;
-            margin: 0.3rem 0 1rem 0;
+            padding: 0.65rem 0.75rem;
+            margin: 0.15rem 0 0.85rem 0;
         }
 
         .suggestion-title {
             color: var(--muted) !important;
-            font-size: 0.78rem;
+            font-size: 0.72rem;
             font-weight: 720;
             text-transform: uppercase;
             letter-spacing: 0.04em;
-            margin-bottom: 0.6rem;
+            margin-bottom: 0.45rem;
         }
 
         .empty-workspace {
@@ -578,6 +617,7 @@ def inject_css() -> None:
             border-radius: 8px;
             padding: 0.85rem 1rem;
             margin-bottom: 0.65rem;
+            box-shadow: var(--shadow-sm);
         }
 
         .ai-response-card-title {
@@ -632,8 +672,8 @@ def inject_css() -> None:
             background: var(--panel);
             border: 1px solid var(--panel-border);
             border-radius: 8px;
-            padding: 0.75rem 0.9rem;
-            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+            padding: 0.72rem 0.85rem;
+            box-shadow: var(--shadow-sm);
         }
 
         [data-testid="stMetric"] label,
@@ -659,14 +699,33 @@ def inject_css() -> None:
             border: 1px solid #bfdbfe;
         }
 
+        .status-pill-ok {
+            background: #dcfce7;
+            border-color: #bbf7d0;
+            color: #166534 !important;
+        }
+
+        .status-pill-pending {
+            background: #eff6ff;
+            border-color: #bfdbfe;
+            color: #1d4ed8 !important;
+        }
+
+        .status-pill-failed {
+            background: #fee2e2;
+            border-color: #fecaca;
+            color: #991b1b !important;
+        }
+
         .insight-card {
             background: var(--panel);
             border: 1px solid var(--panel-border);
             border-left: 4px solid var(--accent);
             border-radius: 8px;
-            padding: 0.85rem 1rem;
-            margin-bottom: 0.65rem;
+            padding: 0.75rem 0.9rem;
+            margin-bottom: 0.55rem;
             color: var(--ink) !important;
+            box-shadow: var(--shadow-sm);
         }
 
         .insight-badge {
@@ -758,8 +817,8 @@ def inject_css() -> None:
             background: #fff7ed;
             border: 1px solid #fed7aa;
             border-radius: 8px;
-            padding: 0.95rem 1rem;
-            margin: 0.75rem 0 1rem 0;
+            padding: 0.75rem 0.85rem;
+            margin: 0.65rem 0 0.85rem 0;
         }
 
         .history-row {
@@ -779,7 +838,20 @@ def inject_css() -> None:
         [data-testid="stFormSubmitButton"] button {
             border-radius: 6px !important;
             border: 1px solid #c9d2e3 !important;
-            min-height: 2.45rem;
+            min-height: 2.35rem;
+            font-weight: 650 !important;
+        }
+
+        .stButton > button[kind="primary"],
+        [data-testid="stFormSubmitButton"] button[kind="primary"] {
+            background: var(--accent) !important;
+            border-color: var(--accent) !important;
+            color: #ffffff !important;
+        }
+
+        .stButton > button[kind="primary"] *,
+        [data-testid="stFormSubmitButton"] button[kind="primary"] * {
+            color: #ffffff !important;
         }
 
         .stButton > button:hover,
@@ -792,15 +864,17 @@ def inject_css() -> None:
             border: 1px solid var(--panel-border);
             border-radius: 8px;
             overflow: hidden;
+            box-shadow: var(--shadow-sm);
         }
 
         .stTabs [data-baseweb="tab-list"] {
-            gap: 0.4rem;
+            gap: 0.25rem;
+            border-bottom: 1px solid var(--panel-border);
         }
 
         .stTabs [data-baseweb="tab"] {
-            border-radius: 7px;
-            padding: 0.45rem 0.75rem;
+            border-radius: 6px 6px 0 0;
+            padding: 0.42rem 0.65rem;
         }
 
         @media (max-width: 900px) {
@@ -1472,13 +1546,16 @@ def render_app_topbar(
     """Render compact app header with source, filters, AI status, and export."""
     filter_label = f"{len(active_filters)} filter(s)" if active_filters else "Unfiltered"
     source = escape(source_name or "Dataset")
+    navigation = st.session_state.get("navigation", "Overview")
+    page_title, page_subtitle = PAGE_COPY.get(navigation, ("Analysis Workspace", "Explore the active dataset."))
     with st.container(border=True):
         left, right = st.columns([5, 1.15], vertical_alignment="center")
         with left:
             st.markdown(
                 f"""
                 <div class="app-eyebrow">AI Data Analyst</div>
-                <div class="app-title">Analysis Workspace</div>
+                <div class="app-title">{escape(page_title)}</div>
+                <div class="app-subtitle">{escape(page_subtitle)}</div>
                 <div class="app-meta-row">
                     <span class="meta-pill">{source}</span>
                     <span class="meta-pill">{df.shape[0]:,}/{raw_df.shape[0]:,} rows</span>
@@ -1638,12 +1715,11 @@ def render_insight_cards(df: pd.DataFrame, limit: int = 4) -> None:
 
 def render_action_bar(title: str, actions: list[str], state_key: str, key_prefix: str) -> None:
     """Render page-level suggested actions."""
-    with st.container(border=True):
-        st.markdown(f'<div class="suggestion-title">{escape(title)}</div>', unsafe_allow_html=True)
-        cols = st.columns(len(actions))
-        for idx, action in enumerate(actions):
-            if cols[idx].button(action, key=f"{key_prefix}_{idx}", width="stretch"):
-                st.session_state[state_key] = action
+    st.markdown(f'<div class="suggestion-title">{escape(title)}</div>', unsafe_allow_html=True)
+    cols = st.columns(len(actions))
+    for idx, action in enumerate(actions):
+        if cols[idx].button(action, key=f"{key_prefix}_{idx}", width="stretch"):
+            st.session_state[state_key] = action
 
 
 def parse_ai_sections(content: str) -> list[tuple[str, str]]:
@@ -1880,8 +1956,6 @@ def render_voice_controls() -> None:
 
 def render_ask_ai(df: pd.DataFrame) -> None:
     """Render AI analyst chat."""
-    st.subheader("Ask AI")
-    st.markdown('<div class="section-kicker">Use structured AI answers for summary, evidence, caveats, and next steps.</div>', unsafe_allow_html=True)
     st.markdown(
         f'<span class="status-pill">Using {escape(selected_ai_model())}</span>',
         unsafe_allow_html=True,
@@ -1955,8 +2029,6 @@ def render_ask_ai(df: pd.DataFrame) -> None:
 
 def render_visualizations(df: pd.DataFrame) -> None:
     """Render interactive chart builder."""
-    st.subheader("Visualizations")
-    st.markdown('<div class="section-kicker">Choose columns, or let the app recommend a chart from the data shape.</div>', unsafe_allow_html=True)
     render_action_bar("Suggested chart actions", VISUAL_ACTIONS, "chart_intent", "visual_action")
 
     nums = numeric_columns(df)
@@ -2064,8 +2136,6 @@ def render_visualizations(df: pd.DataFrame) -> None:
 
 def render_insights(df: pd.DataFrame) -> None:
     """Render deterministic insights and anomaly review."""
-    st.subheader("Insights")
-    st.markdown('<div class="section-kicker">Move from quality checks to anomaly evidence and executive-ready findings.</div>', unsafe_allow_html=True)
     render_action_bar("Suggested insight actions", INSIGHT_ACTIONS, "insight_focus", "insight_action")
     st.toggle("Show analytics glossary", key="show_term_glossary")
     if st.session_state.get("show_term_glossary"):
@@ -2122,12 +2192,6 @@ def render_insights(df: pd.DataFrame) -> None:
 
 def render_presentation_mode(df: pd.DataFrame) -> None:
     """Render a clean dashboard-style view for demos and stakeholder review."""
-    st.subheader("Presentation Mode")
-    st.markdown(
-        '<div class="section-kicker">A focused dashboard with only executive KPIs, findings, and charts.</div>',
-        unsafe_allow_html=True,
-    )
-
     st.markdown(
         """
         <div class="presentation-band">
@@ -2214,14 +2278,18 @@ def render_agent_cards(run: PipelineRun) -> None:
         status = synthetic["status"] if synthetic else result.status if result else "pending"
         summary = synthetic["summary"] if synthetic else result.summary if result else "Waiting for this stage."
         duration = "" if synthetic or not result else f" · {result.duration_seconds}s"
+        status_class = {
+            "completed": "status-pill-ok",
+            "failed": "status-pill-failed",
+            "pending": "status-pill-pending",
+        }.get(str(status), "status-pill-pending")
+        status_text = "Complete" if status == "completed" else "Failed" if status == "failed" else "Pending"
         with column.container(border=True):
             st.markdown(f"**{label}**")
-            if status == "completed":
-                st.success(f"Complete{duration}")
-            elif status == "failed":
-                st.error(f"Failed{duration}")
-            else:
-                st.info("Pending")
+            st.markdown(
+                f'<span class="status-pill {status_class}">{escape(status_text + duration)}</span>',
+                unsafe_allow_html=True,
+            )
             st.caption(summary)
 
 
@@ -2312,9 +2380,6 @@ def render_pipeline_history() -> None:
 
 def render_agent_pipeline(df: pd.DataFrame, source_name: str | None) -> None:
     """Render the InsightFlow-style agentic pipeline."""
-    st.subheader("Agent Pipeline")
-    st.caption("Clean, verify, analyze, and synthesize a report with approval gates.")
-
     run = st.session_state.get("pipeline_run")
     dataset_name = source_name or "Filtered dataset"
 
@@ -2331,7 +2396,7 @@ def render_agent_pipeline(df: pd.DataFrame, source_name: str | None) -> None:
     if not isinstance(run, PipelineRun):
         with st.container(border=True):
             st.markdown("**Ready to run**")
-            st.caption("The pipeline pauses after cleaning so you can approve the proposal before analysis.")
+            st.write("The pipeline pauses after cleaning so you can approve the proposal before analysis.")
         with st.expander("Previous pipeline runs", expanded=False):
             render_pipeline_history()
         return
@@ -2460,8 +2525,6 @@ def render_agent_pipeline(df: pd.DataFrame, source_name: str | None) -> None:
 
 def render_code_generator(df: pd.DataFrame) -> None:
     """Render SQL and Pandas generator."""
-    st.subheader("Code Generator")
-    st.markdown('<div class="section-kicker">Generate SQL and Pandas together so analysts can move between BI and notebook workflows.</div>', unsafe_allow_html=True)
     render_prompt_buttons(CODE_PROMPTS, "code_request", "code_prompt")
 
     with st.form("code_generator_form"):
