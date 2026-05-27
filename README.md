@@ -4,6 +4,12 @@ AI Data Analyst is a production-ready Streamlit analytics workspace that combine
 
 The app is designed as a demo-ready mini analytics platform: upload a CSV or Excel file, inspect the dataset, ask questions in natural language, generate charts, detect outliers, and produce executable analysis code.
 
+## Live Demo
+
+The app is deployed on Streamlit Community Cloud:
+
+https://aidataanalyst-bfnglhzlgw6xyycnwarzrc.streamlit.app/
+
 ## Highlights
 
 - Upload CSV and Excel datasets.
