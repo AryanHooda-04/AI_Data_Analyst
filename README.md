@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="ai_data_analyst/assets/insightanalytica_logo.png" alt="InsightAnalytica logo" width="220">
+</p>
+
 # InsightAnalytica
 
 InsightAnalytica is a production-ready Streamlit analytics workspace that combines data profiling, interactive visualizations, cleaned-data natural-language analysis, anomaly detection, voice input/output, and AI-assisted SQL/Pandas code generation.

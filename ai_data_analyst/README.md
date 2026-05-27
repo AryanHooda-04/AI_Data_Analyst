@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/insightanalytica_logo.png" alt="InsightAnalytica logo" width="220">
+</p>
+
 # InsightAnalytica App
 
 This folder contains the Streamlit application source code for InsightAnalytica.
