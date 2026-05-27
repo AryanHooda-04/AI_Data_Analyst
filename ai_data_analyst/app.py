@@ -253,7 +253,291 @@ def theme_css_variables() -> str:
 
 
 def theme_override_css() -> str:
-    """Return targeted overrides for hard-coded light UI rules."""
+    """Return targeted overrides so the app theme wins over Streamlit's native theme."""
+    if active_theme_mode() == "Light":
+        return """
+        html,
+        body,
+        .stApp,
+        [data-testid="stApp"],
+        [data-testid="stAppViewContainer"],
+        [data-testid="stAppViewContainer"] > .main,
+        [data-testid="stMain"],
+        [data-testid="stMain"] > div,
+        section.main,
+        .main,
+        .main .block-container,
+        [data-testid="stMainBlockContainer"] {
+            color-scheme: light !important;
+            background:
+                linear-gradient(180deg, #fbfdff 0%, #f2faf6 42%, #f8f7ff 100%) !important;
+            color: var(--ink) !important;
+        }
+
+        header[data-testid="stHeader"],
+        [data-testid="stHeader"] {
+            background: transparent !important;
+            background-color: transparent !important;
+            background-image: none !important;
+            box-shadow: none !important;
+            border-bottom: 0 !important;
+            backdrop-filter: none !important;
+        }
+
+        [data-testid="stBottom"],
+        [data-testid="stBottomBlockContainer"],
+        [data-testid="stChatFloatingInputContainer"] {
+            background: #f6f9fd !important;
+            background-color: #f6f9fd !important;
+            background-image: none !important;
+            border-top: 1px solid var(--panel-border) !important;
+            box-shadow: 0 -18px 44px rgba(16, 32, 51, 0.10) !important;
+        }
+
+        [data-testid="stSidebar"] {
+            background: linear-gradient(180deg, #ffffff 0%, #f3f8ff 54%, #f8fbff 100%) !important;
+            border-right-color: var(--sidebar-line) !important;
+            box-shadow: 4px 0 28px rgba(16, 32, 51, 0.06);
+        }
+
+        [data-testid="stSidebar"] *,
+        [data-testid="stMarkdownContainer"],
+        [data-testid="stMarkdownContainer"] p,
+        [data-testid="stMarkdownContainer"] li,
+        [data-testid="stMarkdownContainer"] strong,
+        [data-testid="stMarkdownContainer"] em {
+            color: var(--ink) !important;
+            opacity: 1 !important;
+        }
+
+        .app-subtitle,
+        .sidebar-brand-subtitle,
+        .sidebar-card-meta,
+        .sidebar-card-title,
+        .section-kicker,
+        .conversation-empty-body,
+        .ai-response-card-body,
+        .agent-card-body,
+        .glossary-body,
+        .empty-lead,
+        .muted,
+        [data-testid="stCaptionContainer"] *,
+        .stCaptionContainer,
+        .stCaptionContainer *,
+        small {
+            color: var(--muted) !important;
+        }
+
+        [data-testid="stSidebar"] [data-testid="stFileUploader"] section,
+        [data-testid="stSidebar"] [data-testid="stExpander"],
+        [data-testid="stSidebar"] [data-testid="stExpander"] details,
+        [data-testid="stSidebar"] [data-testid="stExpander"] summary,
+        .sidebar-card,
+        .topbar-command-panel,
+        .readiness-band,
+        .presentation-band,
+        .suggestion-panel,
+        .insight-card,
+        .data-story-card,
+        .ai-response-card,
+        .conversation-empty,
+        .empty-workspace,
+        .glossary-card,
+        .agent-card,
+        .history-row,
+        [data-testid="stExpander"],
+        [data-testid="stExpander"] details,
+        [data-testid="stExpander"] summary,
+        .st-key-top_workspace_nav,
+        [data-testid="stVerticalBlockBorderWrapper"],
+        [data-testid="stVerticalBlockBorderWrapper"] > div,
+        [data-testid="stVerticalBlockBorderWrapper"] [data-testid="stVerticalBlock"] {
+            background: var(--panel) !important;
+            border-color: var(--panel-border) !important;
+            color: var(--ink) !important;
+        }
+
+        .stButton > button,
+        .stDownloadButton > button,
+        .st-key-theme_toggle_button button,
+        [data-testid="stFormSubmitButton"] button,
+        [data-testid="stSidebar"] .stButton > button,
+        [data-testid="stSidebar"] [data-testid="stFileUploader"] button,
+        [data-testid="stSidebar"] .stDownloadButton button,
+        .st-key-top_workspace_nav .stButton > button {
+            background: #ffffff !important;
+            background-color: #ffffff !important;
+            border-color: #c9d2e3 !important;
+            color: var(--ink) !important;
+            box-shadow: var(--shadow-sm) !important;
+        }
+
+        .stButton > button *,
+        .stDownloadButton > button *,
+        .st-key-theme_toggle_button button *,
+        [data-testid="stFormSubmitButton"] button *,
+        [data-testid="stSidebar"] .stButton > button *,
+        [data-testid="stSidebar"] [data-testid="stFileUploader"] button *,
+        [data-testid="stSidebar"] [data-testid="stFileUploader"] button svg,
+        [data-testid="stSidebar"] .stDownloadButton button *,
+        .st-key-top_workspace_nav .stButton > button * {
+            color: inherit !important;
+            fill: currentColor !important;
+            stroke: currentColor !important;
+            opacity: 1 !important;
+        }
+
+        .stButton > button:hover,
+        .stDownloadButton > button:hover,
+        .st-key-theme_toggle_button button:hover,
+        [data-testid="stFormSubmitButton"] button:hover,
+        [data-testid="stSidebar"] .stButton > button:hover,
+        .st-key-top_workspace_nav .stButton > button:hover {
+            background: #f3f8ff !important;
+            border-color: #9ec8f7 !important;
+            color: var(--accent) !important;
+            box-shadow: 0 8px 18px rgba(29, 78, 216, 0.10) !important;
+        }
+
+        .stButton > button[kind="primary"],
+        [data-testid="stFormSubmitButton"] button[kind="primary"],
+        [data-testid="stSidebar"] .stButton > button[kind="primary"],
+        .st-key-top_workspace_nav .stButton > button[kind="primary"] {
+            background: linear-gradient(90deg, var(--accent), var(--accent-2)) !important;
+            background-color: var(--accent) !important;
+            border-color: transparent !important;
+            color: #ffffff !important;
+            box-shadow: 0 10px 22px rgba(29, 78, 216, 0.16) !important;
+        }
+
+        .stButton > button[kind="primary"] *,
+        [data-testid="stFormSubmitButton"] button[kind="primary"] *,
+        [data-testid="stSidebar"] .stButton > button[kind="primary"] *,
+        .st-key-top_workspace_nav .stButton > button[kind="primary"] * {
+            color: #ffffff !important;
+            fill: currentColor !important;
+            stroke: currentColor !important;
+        }
+
+        [data-testid="stWidgetLabel"],
+        [data-testid="stWidgetLabel"] *,
+        [data-testid="stTextInput"] label,
+        [data-testid="stTextInput"] label *,
+        [data-testid="stSelectbox"] label,
+        [data-testid="stSelectbox"] label *,
+        [data-testid="stMultiSelect"] label,
+        [data-testid="stMultiSelect"] label *,
+        [data-testid="stSlider"] label,
+        [data-testid="stSlider"] label *,
+        [data-testid="stRadio"] label,
+        [data-testid="stRadio"] label *,
+        [data-baseweb="radio"] *,
+        [data-testid="stExpander"] summary,
+        [data-testid="stExpander"] summary *,
+        .stTabs [data-baseweb="tab"],
+        .stTabs [data-baseweb="tab"] *,
+        .stTabs [data-baseweb="tab"] p {
+            color: var(--ink) !important;
+            opacity: 1 !important;
+        }
+
+        input,
+        textarea,
+        [contenteditable="true"],
+        [data-baseweb="input"] input,
+        [data-baseweb="textarea"] textarea,
+        [data-baseweb="select"],
+        [data-baseweb="select"] > div,
+        [data-testid="stTextInput"] input,
+        [data-testid="stNumberInput"] input,
+        [data-testid="stSelectbox"] [data-baseweb="select"] > div,
+        [data-testid="stMultiSelect"] [data-baseweb="select"] > div,
+        [data-testid="stChatInput"],
+        [data-testid="stChatInput"] textarea,
+        [data-testid="stChatInput"] input,
+        [data-testid="stChatInput"] [contenteditable="true"] {
+            background: #ffffff !important;
+            background-color: #ffffff !important;
+            color: var(--ink) !important;
+            border-color: #c9d2e3 !important;
+        }
+
+        [data-baseweb="select"] *,
+        [data-testid="stSelectbox"] *,
+        [data-testid="stMultiSelect"] *,
+        [data-testid="stTextInput"] *,
+        [data-testid="stNumberInput"] * {
+            color: var(--ink) !important;
+            fill: currentColor !important;
+            stroke: currentColor !important;
+            opacity: 1 !important;
+        }
+
+        [data-baseweb="popover"],
+        [data-baseweb="menu"],
+        [role="listbox"],
+        [role="option"] {
+            background: #ffffff !important;
+            color: var(--ink) !important;
+            border-color: var(--panel-border) !important;
+        }
+
+        [role="option"]:hover,
+        [role="option"][aria-selected="true"] {
+            background: #eef6ff !important;
+            color: var(--accent) !important;
+        }
+
+        input::placeholder,
+        textarea::placeholder {
+            color: var(--muted) !important;
+            opacity: 1 !important;
+        }
+
+        [data-testid="stPlotlyChart"] {
+            background: #ffffff !important;
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            padding: 0.35rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        [data-testid="stPlotlyChart"] > div,
+        [data-testid="stPlotlyChart"] svg,
+        [data-testid="stDataFrame"],
+        [data-testid="stTable"],
+        [data-testid="stMetric"],
+        [data-testid="stMetric"] div {
+            background-color: transparent !important;
+            color: var(--ink) !important;
+        }
+
+        [data-testid="stMetric"] {
+            background: #ffffff !important;
+            border-color: var(--panel-border) !important;
+        }
+
+        .meta-pill,
+        .filter-chip,
+        .readiness-pill {
+            background: #f2f8ff !important;
+            border-color: #c9ddf4 !important;
+            color: #1e3a5f !important;
+        }
+
+        .status-pill,
+        .readiness-pill-ready {
+            background: #ecfdf5 !important;
+            border-color: #bbf7d0 !important;
+            color: #166534 !important;
+        }
+
+        .readiness-pill-warn {
+            background: #fff7ed !important;
+            border-color: #fed7aa !important;
+            color: #9a3412 !important;
+        }
+        """
     if active_theme_mode() != "Dark":
         return ""
     return """
