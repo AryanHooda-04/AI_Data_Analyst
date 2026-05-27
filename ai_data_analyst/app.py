@@ -685,7 +685,7 @@ st.set_page_config(
     page_title=APP_NAME,
     page_icon=":bar_chart:",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="auto",
 )
 
 
@@ -1702,11 +1702,263 @@ def inject_css() -> None:
             padding: 0.42rem 0.65rem;
         }
 
+        @media (max-width: 1180px) {
+            [data-testid="stMainBlockContainer"] {
+                padding-left: 2rem !important;
+                padding-right: 2rem !important;
+                max-width: 100% !important;
+            }
+
+            .st-key-top_workspace_nav [data-testid="stHorizontalBlock"] {
+                flex-wrap: wrap !important;
+                gap: 0.55rem !important;
+            }
+
+            .st-key-top_workspace_nav [data-testid="column"] {
+                flex: 1 1 8.8rem !important;
+                min-width: 8.8rem !important;
+                width: auto !important;
+            }
+
+            .st-key-top_workspace_nav .stButton > button {
+                min-height: 2.35rem;
+            }
+        }
+
         @media (max-width: 900px) {
+            [data-testid="stMainBlockContainer"] {
+                padding-left: 1.25rem !important;
+                padding-right: 1.25rem !important;
+            }
+
             .empty-grid,
             .agent-grid,
             .glossary-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .st-key-app_topbar [data-testid="stHorizontalBlock"] {
+                flex-wrap: wrap !important;
+                gap: 0.7rem !important;
+            }
+
+            .st-key-app_topbar [data-testid="column"] {
+                flex: 1 1 100% !important;
+                min-width: 100% !important;
+                width: 100% !important;
+            }
+
+            .st-key-app_topbar .stButton > button,
+            .st-key-app_topbar .stDownloadButton > button {
+                min-height: 2.55rem;
+            }
+
+            .app-title {
+                font-size: clamp(1.28rem, 4vw, 1.45rem);
+            }
+
+            .app-subtitle {
+                max-width: 100%;
+            }
+
+            .data-story-card {
+                min-width: min(100%, 13rem);
+            }
+        }
+
+        @media (max-width: 720px) {
+            [data-testid="stMainBlockContainer"] {
+                padding: 0.85rem 0.75rem 6.5rem !important;
+            }
+
+            [data-testid="stSidebar"] {
+                width: min(88vw, 20rem) !important;
+            }
+
+            [data-testid="stHorizontalBlock"] {
+                flex-wrap: wrap !important;
+                gap: 0.65rem !important;
+            }
+
+            [data-testid="stHorizontalBlock"] > [data-testid="column"] {
+                flex: 1 1 100% !important;
+                min-width: 100% !important;
+                width: 100% !important;
+            }
+
+            .st-key-top_workspace_nav [data-testid="column"] {
+                flex: 1 1 calc(50% - 0.35rem) !important;
+                min-width: calc(50% - 0.35rem) !important;
+                width: calc(50% - 0.35rem) !important;
+            }
+
+            .st-key-app_topbar {
+                padding: 0.8rem !important;
+            }
+
+            .app-brandline {
+                align-items: flex-start;
+                gap: 0.55rem;
+            }
+
+            .app-brandline .brand-mark {
+                width: 36px;
+                height: 36px;
+                border-radius: 9px;
+            }
+
+            .app-meta-row,
+            .filter-chip-row,
+            .workflow-rail,
+            .empty-steps {
+                gap: 0.38rem;
+            }
+
+            .meta-pill,
+            .filter-chip,
+            .readiness-pill,
+            .status-pill {
+                max-width: 100%;
+                white-space: normal;
+                line-height: 1.25;
+            }
+
+            [data-testid="stMetric"] {
+                padding: 0.72rem 0.78rem;
+            }
+
+            [data-testid="stMetricValue"],
+            [data-testid="stMetricValue"] * {
+                font-size: 1.42rem !important;
+            }
+
+            .stButton > button,
+            .stDownloadButton > button,
+            [data-testid="stFormSubmitButton"] button {
+                width: 100% !important;
+                min-height: 2.7rem;
+                white-space: normal !important;
+            }
+
+            .stButton > button p,
+            .stDownloadButton > button p,
+            [data-testid="stFormSubmitButton"] button p {
+                white-space: normal !important;
+                overflow-wrap: anywhere;
+                line-height: 1.18;
+            }
+
+            .stTabs [data-baseweb="tab-list"] {
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                scrollbar-width: thin;
+            }
+
+            .stTabs [data-baseweb="tab"] {
+                min-width: max-content;
+                padding: 0.45rem 0.7rem;
+            }
+
+            div[data-testid="stDataFrame"],
+            [data-testid="stPlotlyChart"] {
+                max-width: 100%;
+                overflow-x: auto;
+            }
+
+            [data-testid="stPlotlyChart"] {
+                padding: 0.25rem;
+            }
+
+            .glossary-grid,
+            .agent-grid,
+            .empty-grid {
                 grid-template-columns: 1fr;
+                gap: 0.65rem;
+            }
+
+            .insight-card,
+            .conversation-empty,
+            .presentation-band,
+            .approval-panel,
+            .ai-response-card {
+                padding: 0.78rem 0.82rem;
+            }
+
+            [data-testid="stChatMessage"] {
+                gap: 0.45rem;
+            }
+
+            [data-testid="stBottom"],
+            [data-testid="stBottomBlockContainer"],
+            [data-testid="stChatFloatingInputContainer"] {
+                padding-left: 0.65rem !important;
+                padding-right: 0.65rem !important;
+            }
+
+            [data-testid="stChatInput"] {
+                width: 100% !important;
+                min-height: 3rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            [data-testid="stMainBlockContainer"] {
+                padding-left: 0.6rem !important;
+                padding-right: 0.6rem !important;
+            }
+
+            .st-key-top_workspace_nav [data-testid="column"] {
+                flex: 1 1 100% !important;
+                min-width: 100% !important;
+                width: 100% !important;
+            }
+
+            .app-brandline {
+                display: grid;
+                grid-template-columns: 34px minmax(0, 1fr);
+            }
+
+            .app-brandline .brand-mark {
+                width: 34px;
+                height: 34px;
+            }
+
+            .app-title {
+                font-size: 1.22rem;
+                overflow-wrap: anywhere;
+            }
+
+            .app-subtitle,
+            .conversation-empty-body,
+            .glossary-body,
+            .agent-card-body {
+                font-size: 0.84rem;
+                line-height: 1.4;
+            }
+
+            .meta-pill,
+            .filter-chip,
+            .readiness-pill,
+            .status-pill {
+                font-size: 0.72rem;
+                padding: 0.22rem 0.48rem;
+            }
+
+            .sidebar-card,
+            .glossary-card,
+            .agent-card,
+            .history-row,
+            .data-story-card {
+                padding: 0.72rem 0.78rem;
+            }
+
+            [data-testid="stMetric"] {
+                min-height: auto;
+            }
+
+            [data-testid="stMetricValue"],
+            [data-testid="stMetricValue"] * {
+                font-size: 1.3rem !important;
             }
         }
         """ + theme_override_css() + """
@@ -2447,7 +2699,7 @@ def render_app_topbar(
     is_dark = active_theme_mode() == "Dark"
     theme_label = "Light mode" if is_dark else "Dark mode"
     theme_icon = ":material/light_mode:" if is_dark else ":material/dark_mode:"
-    with st.container(border=True):
+    with st.container(border=True, key="app_topbar"):
         left, right = st.columns([4.2, 1.8], vertical_alignment="center")
         with left:
             st.markdown(
