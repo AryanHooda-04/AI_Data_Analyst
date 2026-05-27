@@ -21,7 +21,7 @@ from analyzer import (
     summary_stats,
 )
 from anomaly_detector import detect_outliers_iqr, detect_outliers_zscore, outlier_summary
-from ai_engine import ask_ai, openai_ssl_mode, text_to_speech, transcribe_audio
+from ai_engine import conversation_ai, openai_ssl_mode, text_to_speech, transcribe_audio
 from code_generator import generate_code
 from data_loader import load_file
 from pipeline_history import load_recent_runs
@@ -45,7 +45,7 @@ VOICE_RECORDER = components.declare_component("voice_recorder", path=str(APP_DIR
 
 NAV_ITEMS = [
     {"label": "Overview", "icon": ":material/dashboard:"},
-    {"label": "Ask AI", "icon": ":material/smart_toy:"},
+    {"label": "Conversation AI", "icon": ":material/forum:"},
     {"label": "Visualizations", "icon": ":material/monitoring:"},
     {"label": "Insights & Anomalies", "icon": ":material/troubleshoot:"},
     {"label": "Agent Pipeline", "icon": ":material/account_tree:"},
@@ -55,7 +55,7 @@ NAV_ITEMS = [
 
 PAGE_COPY = {
     "Overview": ("Overview", "Dataset health, preview, and core quality checks."),
-    "Ask AI": ("Ask AI", "Ask focused questions and review structured answers."),
+    "Conversation AI": ("Conversation AI", "Chat with a dataset-aware analyst and ask follow-up questions."),
     "Visualizations": ("Visualizations", "Build charts from the active dataset view."),
     "Insights & Anomalies": ("Insights", "Review patterns, quality signals, and anomalies."),
     "Agent Pipeline": ("Agent Pipeline", "Clean, verify, analyze, and synthesize a report."),
@@ -631,6 +631,36 @@ def inject_css() -> None:
             line-height: 1.55;
         }
 
+        .conversation-empty {
+            background: #ffffff;
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 0.8rem 0 0.95rem 0;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .conversation-empty-title {
+            color: var(--ink) !important;
+            font-size: 1rem;
+            font-weight: 760;
+            margin-bottom: 0.25rem;
+        }
+
+        .conversation-empty-body {
+            color: var(--muted) !important;
+            font-size: 0.9rem;
+            line-height: 1.45;
+        }
+
+        .conversation-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.45rem;
+            align-items: center;
+            margin: 0.2rem 0 0.7rem 0;
+        }
+
         .presentation-band {
             background: #ffffff;
             border: 1px solid var(--panel-border);
@@ -902,7 +932,7 @@ def initialize_state() -> None:
     defaults = {
         "ai_messages": [],
         "generated_code": "",
-        "ask_text": "",
+        "conversation_draft": "",
         "code_request": "",
         "navigation": "Overview",
         "use_sample_dataset": True,
@@ -936,7 +966,7 @@ def reset_chat_if_dataset_changed(df: pd.DataFrame) -> None:
         st.session_state["dataset_fingerprint"] = fingerprint
         st.session_state["ai_messages"] = []
         st.session_state["generated_code"] = ""
-        st.session_state["ask_text"] = ""
+        st.session_state["conversation_draft"] = ""
         st.session_state["code_request"] = ""
         st.session_state["pipeline_run"] = None
 
@@ -1170,6 +1200,7 @@ def clear_ai_chat() -> None:
     st.session_state["ai_messages"] = []
     st.session_state["last_voice_audio"] = None
     st.session_state["last_transcript"] = ""
+    st.session_state["conversation_draft"] = ""
 
 
 def reset_workspace_state() -> None:
@@ -1177,7 +1208,7 @@ def reset_workspace_state() -> None:
     for key, value in {
         "ai_messages": [],
         "generated_code": "",
-        "ask_text": "",
+        "conversation_draft": "",
         "code_request": "",
         "navigation": "Overview",
         "chart_intent": "Auto",
@@ -1471,6 +1502,8 @@ def render_sidebar() -> tuple[pd.DataFrame | None, pd.DataFrame | None, str, str
             st.sidebar.error(load_error)
 
     st.sidebar.markdown('<div class="sidebar-section-title">Workspace</div>', unsafe_allow_html=True)
+    if st.session_state.get("navigation") == "Ask AI":
+        st.session_state["navigation"] = "Conversation AI"
     if st.session_state.get("navigation") not in [item["label"] for item in NAV_ITEMS]:
         st.session_state["navigation"] = "Overview"
     for item in NAV_ITEMS:
@@ -1489,7 +1522,7 @@ def render_sidebar() -> tuple[pd.DataFrame | None, pd.DataFrame | None, str, str
     st.sidebar.markdown('<div class="sidebar-section-title">Session tools</div>', unsafe_allow_html=True)
     tool_cols = st.sidebar.columns(2)
     tool_cols[0].button("Reset", icon=":material/restart_alt:", on_click=reset_workspace_state, width="stretch")
-    tool_cols[1].button("Clear AI", icon=":material/delete_sweep:", on_click=clear_ai_chat, width="stretch")
+    tool_cols[1].button("Clear chat", icon=":material/delete_sweep:", on_click=clear_ai_chat, width="stretch")
 
     st.sidebar.markdown('<div class="sidebar-section-title">AI status</div>', unsafe_allow_html=True)
     st.sidebar.selectbox("GPT model", MODEL_OPTIONS, key="model_choice")
@@ -1866,17 +1899,21 @@ def render_overview(df: pd.DataFrame) -> None:
             st.dataframe(corr, width="stretch", row_height=table_row_height())
 
 
-def render_prompt_buttons(prompts: list[str], state_key: str, prefix: str) -> None:
-    """Render reusable prompt shortcut buttons."""
+def render_prompt_buttons(prompts: list[str], state_key: str, prefix: str) -> str | None:
+    """Render reusable prompt shortcut buttons and return the selected prompt."""
+    selected_prompt: str | None = None
     cols = st.columns(len(prompts))
     for idx, prompt in enumerate(prompts):
         if cols[idx].button(prompt, key=f"{prefix}_{idx}", width="stretch"):
             st.session_state[state_key] = prompt
+            selected_prompt = prompt
+    return selected_prompt
 
 
-def render_voice_controls() -> None:
+def render_voice_controls() -> str | None:
     """Render voice input and voice output controls for AI chat."""
-    with st.expander("Voice input and output", expanded=True):
+    transcript_to_send: str | None = None
+    with st.expander("Voice input and output", expanded=False):
         st.caption("Voice responses are AI-generated.")
         control_cols = st.columns(3)
         control_cols[0].toggle("Speak AI responses", key="voice_output_enabled")
@@ -1884,12 +1921,12 @@ def render_voice_controls() -> None:
         control_cols[2].selectbox("Voice", VOICE_OPTIONS, key="tts_voice")
         st.selectbox("Transcription model", TRANSCRIPTION_OPTIONS, key="transcription_model")
 
-        recorded_audio = VOICE_RECORDER(key="ask_ai_voice_recorder")
+        recorded_audio = VOICE_RECORDER(key="conversation_voice_recorder")
 
         upload = st.file_uploader(
             "Or upload an audio question",
             type=["mp3", "mp4", "mpeg", "mpga", "m4a", "wav", "webm"],
-            key="ask_ai_audio_upload",
+            key="conversation_audio_upload",
         )
 
         audio_bytes: bytes | None = None
@@ -1905,17 +1942,17 @@ def render_voice_controls() -> None:
             filename = upload.name or f"voice_input.{extension}"
             st.audio(audio_bytes, format=f"audio/{extension}")
 
-        if st.button("Transcribe to prompt", icon=":material/keyboard_voice:", disabled=audio_bytes is None):
+        if st.button("Transcribe to message", icon=":material/keyboard_voice:", disabled=audio_bytes is None):
             if audio_bytes and demo_mode_enabled() and len(audio_bytes) > DEMO_MAX_AUDIO_BYTES:
                 st.warning(f"Demo mode limits audio input to {DEMO_MAX_AUDIO_MB:,} MB.")
-                return
+                return None
             if not demo_guard_allows(
                 "Voice transcription",
                 filename,
                 DEMO_TRANSCRIPTION_TOKEN_COST,
                 include_context=False,
             ):
-                return
+                return None
             with st.spinner("Transcribing voice input..."):
                 try:
                     transcript = transcribe_audio(
@@ -1935,8 +1972,8 @@ def render_voice_controls() -> None:
                         include_context=False,
                     )
                     st.session_state["last_transcript"] = transcript
-                    st.session_state["ask_text"] = transcript
-                    st.success("Transcript added to the question box.")
+                    st.session_state["conversation_draft"] = transcript
+                    st.success("Transcript is ready to send.")
                     st.rerun()
                 except Exception as exc:  # noqa: BLE001
                     st.error(str(exc))
@@ -1944,6 +1981,13 @@ def render_voice_controls() -> None:
         if st.session_state.get("last_transcript"):
             st.caption("Latest transcript")
             st.code(st.session_state["last_transcript"], language="text")
+            transcript_cols = st.columns(2)
+            if transcript_cols[0].button("Send transcript", icon=":material/send:", type="primary", width="stretch"):
+                transcript_to_send = st.session_state["last_transcript"]
+            if transcript_cols[1].button("Clear transcript", icon=":material/close:", width="stretch"):
+                st.session_state["last_transcript"] = ""
+                st.session_state["conversation_draft"] = ""
+                st.rerun()
 
         if st.session_state.get("last_voice_audio"):
             st.caption("Latest voice response")
@@ -1952,18 +1996,93 @@ def render_voice_controls() -> None:
                 format="audio/mp3",
                 autoplay=st.session_state.get("voice_autoplay", False),
             )
+    return transcript_to_send
 
 
-def render_ask_ai(df: pd.DataFrame) -> None:
-    """Render AI analyst chat."""
+def render_conversation_empty_state() -> None:
+    """Render a light empty state for a new AI conversation."""
     st.markdown(
-        f'<span class="status-pill">Using {escape(selected_ai_model())}</span>',
+        """
+        <div class="conversation-empty">
+            <div class="conversation-empty-title">Start a conversation with your dataset</div>
+            <div class="conversation-empty-body">
+                Ask for trends, definitions, outlier explanations, reporting caveats, or follow-up analysis.
+                The assistant keeps recent chat context and uses the active filtered dataset view.
+            </div>
+        </div>
+        """,
         unsafe_allow_html=True,
     )
-    render_voice_controls()
-    render_prompt_buttons(SUGGESTED_QUESTIONS, "ask_text", "ask_prompt")
+
+
+def submit_conversation_message(df: pd.DataFrame, question: str) -> bool:
+    """Submit one conversational turn and render the assistant response."""
+    question = truncate_demo_text(question.strip())
+    if not question:
+        st.warning("Enter a message before sending.")
+        return False
+    if not demo_guard_allows("Conversation AI", question, ask_output_tokens()):
+        return False
 
     messages = st.session_state.setdefault("ai_messages", [])
+    messages.append({"role": "user", "content": question})
+    with st.chat_message("user"):
+        st.markdown(question)
+
+    with st.chat_message("assistant"):
+        with st.spinner("Thinking through the dataset..."):
+            try:
+                response = conversation_ai(
+                    df,
+                    question,
+                    history=messages[:-1],
+                    model=selected_ai_model(),
+                    reasoning_effort=selected_reasoning_effort(),
+                    max_tokens=ask_output_tokens(),
+                    context_max_chars=demo_context_chars(),
+                )
+                render_ai_response(response)
+                messages.append({"role": "assistant", "content": response})
+                record_demo_usage("Conversation AI", question, response, ask_output_tokens())
+                if st.session_state.get("voice_output_enabled"):
+                    with st.spinner("Generating voice response..."):
+                        audio = text_to_speech(
+                            speech_safe_text(
+                                response,
+                                max_chars=DEMO_TTS_CHAR_LIMIT if demo_mode_enabled() else 12_000,
+                            ),
+                            voice=st.session_state.get("tts_voice", "coral"),
+                        )
+                    st.session_state["last_voice_audio"] = audio
+                    st.audio(
+                        audio,
+                        format="audio/mp3",
+                        autoplay=st.session_state.get("voice_autoplay", False),
+                    )
+            except Exception as exc:  # noqa: BLE001
+                st.error(str(exc))
+                return False
+    return True
+
+
+def render_conversation_ai(df: pd.DataFrame) -> None:
+    """Render conversational AI analyst chat."""
+    st.markdown(
+        f"""
+        <div class="conversation-toolbar">
+            <span class="status-pill">Using {escape(selected_ai_model())}</span>
+            <span class="status-pill">{len(st.session_state.get("ai_messages", [])) // 2:,} conversation turns</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    voice_prompt = render_voice_controls()
+    shortcut_prompt = render_prompt_buttons(SUGGESTED_QUESTIONS, "conversation_draft", "conversation_prompt")
+
+    messages = st.session_state.setdefault("ai_messages", [])
+    if not messages:
+        render_conversation_empty_state()
+
     for message in messages:
         with st.chat_message(message["role"]):
             if message["role"] == "assistant":
@@ -1971,60 +2090,16 @@ def render_ask_ai(df: pd.DataFrame) -> None:
             else:
                 st.markdown(message["content"])
 
-    with st.form("ask_ai_form"):
-        question = st.text_area(
-            "Ask anything about your data",
-            placeholder="Example: Which region has the strongest revenue trend and why?",
-            height=120,
-            max_chars=DEMO_MAX_REQUEST_CHARS if demo_mode_enabled() else None,
-            key="ask_text",
-        )
-        submitted = st.form_submit_button("Analyze", type="primary")
-
-    if submitted:
-        question = truncate_demo_text(question.strip())
-        if not question:
-            st.warning("Enter a question before analyzing.")
-            return
-        if not demo_guard_allows("Ask AI", question, ask_output_tokens()):
-            return
-
-        messages.append({"role": "user", "content": question})
-        with st.chat_message("user"):
-            st.markdown(question)
-
-        with st.chat_message("assistant"):
-            with st.spinner("Analyzing with AI..."):
-                try:
-                    response = ask_ai(
-                        df,
-                        question,
-                        history=messages[:-1],
-                        model=selected_ai_model(),
-                        reasoning_effort=selected_reasoning_effort(),
-                        max_tokens=ask_output_tokens(),
-                        context_max_chars=demo_context_chars(),
-                    )
-                    render_ai_response(response)
-                    messages.append({"role": "assistant", "content": response})
-                    record_demo_usage("Ask AI", question, response, ask_output_tokens())
-                    if st.session_state.get("voice_output_enabled"):
-                        with st.spinner("Generating voice response..."):
-                            audio = text_to_speech(
-                                speech_safe_text(
-                                    response,
-                                    max_chars=DEMO_TTS_CHAR_LIMIT if demo_mode_enabled() else 12_000,
-                                ),
-                                voice=st.session_state.get("tts_voice", "coral"),
-                            )
-                        st.session_state["last_voice_audio"] = audio
-                        st.audio(
-                            audio,
-                            format="audio/mp3",
-                            autoplay=st.session_state.get("voice_autoplay", False),
-                        )
-                except Exception as exc:  # noqa: BLE001
-                    st.error(str(exc))
+    chat_prompt = st.chat_input(
+        "Message Conversation AI...",
+        max_chars=DEMO_MAX_REQUEST_CHARS if demo_mode_enabled() else None,
+        key="conversation_chat_input",
+    )
+    prompt = voice_prompt or shortcut_prompt or chat_prompt
+    if prompt and submit_conversation_message(df, str(prompt)):
+        st.session_state["conversation_draft"] = ""
+        if voice_prompt:
+            st.session_state["last_transcript"] = ""
 
 
 def render_visualizations(df: pd.DataFrame) -> None:
@@ -2588,7 +2663,7 @@ def render_empty_state(load_error: str | None = None) -> None:
                 </div>
                 <div class="empty-item">
                     <div class="empty-item-title">Workflow</div>
-                    <div class="muted">Load data, inspect readiness, ask AI, build charts, review anomalies, then export code.</div>
+                    <div class="muted">Load data, inspect readiness, chat with Conversation AI, build charts, review anomalies, then export code.</div>
                 </div>
             </div>
         </div>
@@ -2630,8 +2705,8 @@ def main() -> None:
 
     if navigation == "Overview":
         render_overview(filtered_df)
-    elif navigation == "Ask AI":
-        render_ask_ai(filtered_df)
+    elif navigation == "Conversation AI":
+        render_conversation_ai(filtered_df)
     elif navigation == "Visualizations":
         render_visualizations(filtered_df)
     elif navigation == "Insights & Anomalies":

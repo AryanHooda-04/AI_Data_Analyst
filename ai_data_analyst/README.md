@@ -55,7 +55,7 @@ flowchart LR
     O --> P["SQLite History<br/>pipeline_history.py"]
     D --> H["Prompt Context<br/>utils.py"]
     H --> I["OpenAI Client<br/>ai_engine.py"]
-    I --> J["Ask AI"]
+    I --> J["Conversation AI"]
     I --> K["Voice Input / Output"]
     H --> L["Code Generator<br/>code_generator.py"]
     E --> M["Streamlit UI"]
@@ -115,7 +115,7 @@ Demo mode is enabled by default for Streamlit Community Cloud. It limits public 
 
 - Per-session AI calls: `DEMO_AI_CALL_LIMIT`, default `6`.
 - Per-session estimated token budget: `DEMO_SESSION_TOKEN_BUDGET`, default `8000`.
-- Ask AI output cap: `DEMO_TEXT_OUTPUT_TOKENS`, default `550`.
+- Conversation AI output cap: `DEMO_TEXT_OUTPUT_TOKENS`, default `550`.
 - Code Generator output cap: `DEMO_CODE_OUTPUT_TOKENS`, default `700`.
 - Dataset context cap: `DEMO_CONTEXT_CHAR_LIMIT`, default `5000` characters.
 - Prompt length cap: `DEMO_MAX_REQUEST_CHARS`, default `1200` characters.
@@ -148,7 +148,7 @@ The repo ignores `.env`, `.streamlit/secrets.toml`, logs, generated screenshots,
 
 1. Load `sample_data.csv` from the sidebar.
 2. Review the Overview readiness checks and correlations.
-3. Ask AI: `What are the most important trends in this dataset?`
+3. Conversation AI: `What are the most important trends in this dataset?`
 4. Open Visualizations and chart revenue by region or over time.
 5. Review Insights & Anomalies with IQR detection.
 6. Generate SQL and Pandas code for a business question.

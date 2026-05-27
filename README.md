@@ -2,7 +2,7 @@
 
 AI Data Analyst is a production-ready Streamlit analytics workspace that combines data profiling, interactive visualizations, natural-language analysis, anomaly detection, voice input/output, and AI-assisted SQL/Pandas code generation.
 
-The app is designed as a demo-ready mini analytics platform: upload a CSV or Excel file, inspect the dataset, ask questions in natural language, generate charts, detect outliers, and produce executable analysis code.
+The app is designed as a demo-ready mini analytics platform: upload a CSV or Excel file, inspect the dataset, have a conversation with a dataset-aware AI analyst, generate charts, detect outliers, and produce executable analysis code.
 
 ## Live Demo
 
@@ -15,7 +15,7 @@ https://aidataanalyst-bfnglhzlgw6xyycnwarzrc.streamlit.app/
 - Upload CSV and Excel datasets.
 - Use the bundled sample dataset for instant demos.
 - Explore dataset shape, schema, data quality, missing values, summary statistics, correlations, and column profiles.
-- Ask AI questions with chat history, suggested prompts, selectable OpenAI model, and configurable reasoning effort.
+- Use Conversation AI with persistent chat history, suggested prompts, selectable OpenAI model, and configurable reasoning effort.
 - Use voice input and AI voice output for analyst-style conversations.
 - Generate Plotly charts with chart recommendations.
 - Detect anomalies with IQR and Z-score methods.
@@ -70,12 +70,12 @@ flowchart TD
     DF --> Pipeline["Agent Pipeline<br/>clean, verify, analyze, report"]
     DF --> Context["Prompt Context Builder<br/>utils.py"]
     Context --> AI["AI Engine<br/>OpenAI SDK"]
-    AI --> Ask["Ask AI responses"]
+    AI --> Chat["Conversation AI responses"]
     AI --> Code["SQL + Pandas generation"]
     AI --> Voice["Transcription + TTS"]
     Pipeline --> History["SQLite History<br/>pipeline_history.py"]
     Pipeline --> Report["Executive Report<br/>Markdown export"]
-    Ask --> UI
+    Chat --> UI
     Code --> UI
     Viz --> UI
     Analyzer --> UI
@@ -149,7 +149,7 @@ Default safeguards:
 
 - 6 AI actions per browser session.
 - 8,000 estimated tokens per browser session.
-- 550 output tokens for Ask AI responses.
+- 550 output tokens for Conversation AI responses.
 - 700 output tokens for Code Generator responses.
 - 5,000 characters of dataset context sent to OpenAI.
 - 1,200 characters per user prompt.
@@ -227,9 +227,9 @@ git push origin main
 - Column type and profile tables.
 - Correlation matrix for numeric fields.
 
-### Ask AI
+### Conversation AI
 
-- Chat-style data questions.
+- Dataset-aware chat for questions and follow-up analysis.
 - Suggested analyst prompts.
 - OpenAI model selection, including GPT-5.2.
 - Reasoning effort selector.

@@ -152,6 +152,51 @@ def ask_ai(
     )
 
 
+def conversation_ai(
+    df: pd.DataFrame,
+    message: str,
+    history: Iterable[dict[str, str]] | None = None,
+    *,
+    model: str = DEFAULT_MODEL,
+    reasoning_effort: str = "none",
+    max_tokens: int = 1_200,
+    context_max_chars: int = 16_000,
+) -> str:
+    """Continue a conversational analysis grounded in the active DataFrame."""
+    message = clean_text(message)
+    if not message:
+        raise ValueError("Please enter a message before sending.")
+
+    system_prompt = (
+        "You are Conversation AI, a senior data analyst embedded in an analytics workspace. "
+        "Use the dataset context and the recent chat history to answer naturally, including follow-up questions. "
+        "Do not invent facts that are not supported by the dataset context; label assumptions clearly. "
+        "When the user asks for analysis, structure the answer with these Markdown headings when useful: "
+        "Summary, Evidence, Caveats, Recommended Next Steps. "
+        "For quick clarifications, definitions, or conversational follow-ups, answer directly and concisely. "
+        "If a chart, SQL query, or Pandas snippet would help, suggest it briefly."
+    )
+
+    messages: list[dict[str, str]] = [
+        {"role": "system", "content": system_prompt},
+        {
+            "role": "user",
+            "content": "Active dataset context for this conversation:\n\n" + dataframe_context(df, max_chars=context_max_chars),
+        },
+    ]
+    if history:
+        messages.extend(_format_history(history, limit=10))
+    messages.append({"role": "user", "content": message})
+
+    return complete_with_messages(
+        messages,
+        model=model,
+        reasoning_effort=reasoning_effort,
+        temperature=0.25,
+        max_tokens=max_tokens,
+    )
+
+
 def transcribe_audio(
     audio_bytes: bytes,
     *,
