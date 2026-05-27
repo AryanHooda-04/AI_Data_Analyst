@@ -46,6 +46,50 @@ ai_data_analyst/
     index.html
 ```
 
+## System Architecture
+
+```mermaid
+flowchart TD
+    User["User"] --> UI["Streamlit UI<br/>app.py"]
+    UI --> Loader["Data Loader<br/>CSV / Excel"]
+    Loader --> DF["pandas DataFrame"]
+    DF --> Analyzer["Analyzer<br/>stats, quality, profiles"]
+    DF --> Viz["Visualization<br/>Plotly charts"]
+    DF --> Anomaly["Anomaly Detector<br/>IQR / Z-score"]
+    DF --> Context["Prompt Context Builder<br/>utils.py"]
+    Context --> AI["AI Engine<br/>OpenAI SDK"]
+    AI --> Ask["Ask AI responses"]
+    AI --> Code["SQL + Pandas generation"]
+    AI --> Voice["Transcription + TTS"]
+    Ask --> UI
+    Code --> UI
+    Viz --> UI
+    Analyzer --> UI
+    Anomaly --> UI
+    Voice --> UI
+```
+
+The application follows a modular, single-process Streamlit architecture. Uploaded files are loaded into a pandas DataFrame, filtered in the UI, and passed to independent services for profiling, visualization, anomaly detection, AI analysis, and code generation.
+
+### Runtime Flow
+
+1. The user uploads a CSV/XLSX file or loads `sample_data.csv`.
+2. `data_loader.py` validates the file type and returns a DataFrame.
+3. `app.py` stores the working dataset in Streamlit session state.
+4. Global filters create a filtered DataFrame used across all pages.
+5. `analyzer.py`, `visualization.py`, and `anomaly_detector.py` generate deterministic analytics locally.
+6. `utils.py` creates compact schema, sample, and summary context for AI prompts.
+7. `ai_engine.py` calls OpenAI for natural-language answers, transcription, and voice output.
+8. `code_generator.py` returns SQL, Pandas code, and an explanation for analyst requests.
+
+### Design Principles
+
+- Keep data loading, analysis, visualization, AI access, and code generation separate.
+- Prefer deterministic local analytics before calling AI.
+- Send compact dataset context to OpenAI instead of entire files.
+- Keep API keys and generated artifacts out of Git.
+- Make the UI demo-ready while preserving a clean Python module structure.
+
 ## Quick Start
 
 ```powershell
@@ -83,6 +127,42 @@ streamlit run app.py
 ```
 
 The sidebar lets you upload data, load the sample dataset, view readiness checks, apply global filters, select the AI model, enable voice options, and navigate between analysis pages.
+
+## Git And GitHub Workflow
+
+This repository is configured for GitHub at:
+
+```text
+https://github.com/AryanHooda-04/AI_Data_Analyst.git
+```
+
+Recommended day-to-day workflow:
+
+```powershell
+git status
+git pull --rebase origin main
+git checkout -b feature/short-description
+git add .
+git commit -m "Describe the change"
+git push -u origin feature/short-description
+```
+
+For small documentation or demo updates on `main`:
+
+```powershell
+git status
+git add README.md ai_data_analyst/README.md
+git commit -m "Update project documentation"
+git push origin main
+```
+
+### Repository Hygiene
+
+- `.env`, Streamlit secrets, logs, screenshots, caches, and virtual environments are ignored.
+- Keep API keys out of commits.
+- Commit README changes with related architecture or setup updates.
+- Use short, meaningful commit messages.
+- Run the Python syntax check before pushing application changes.
 
 ## Main Capabilities
 
