@@ -1371,6 +1371,11 @@ def set_navigation(label: str) -> None:
     st.session_state["navigation"] = label
 
 
+def enable_sample_dataset() -> None:
+    """Enable the sample dataset before sidebar widgets are instantiated."""
+    st.session_state["use_sample_dataset"] = True
+
+
 def clear_ai_chat() -> None:
     """Clear chat and generated voice output."""
     st.session_state["ai_messages"] = []
@@ -2846,9 +2851,12 @@ def render_empty_state(load_error: str | None = None) -> None:
     with st.container(key="empty_actions"):
         if load_error:
             st.error(load_error)
-        if st.button("Load sample dataset", icon=":material/table_chart:", type="primary"):
-            st.session_state["use_sample_dataset"] = True
-            st.rerun()
+        st.button(
+            "Load sample dataset",
+            icon=":material/table_chart:",
+            type="primary",
+            on_click=enable_sample_dataset,
+        )
 
 
 def main() -> None:
