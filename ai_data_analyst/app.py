@@ -2200,23 +2200,43 @@ def render_agent_cards(run: PipelineRun) -> None:
         "VisualizationAgent",
         "ReportSynthesisAgent",
     ]
-    cards = []
-    for agent_name in agents:
-        result = run.agent_results.get(agent_name)
-        status = result.status if result else "pending"
-        css_status = "agent-card-completed" if status == "completed" else "agent-card-failed" if status == "failed" else "agent-card-pending"
-        summary = result.summary if result else "Waiting for this stage."
-        duration = f"{result.duration_seconds}s" if result else "-"
-        cards.append(
-            f"""
-            <div class="agent-card {css_status}">
-                <div class="agent-card-title">{escape(agent_display_name(agent_name))}</div>
-                <div class="agent-card-meta">{escape(status.title())} · {escape(duration)}</div>
-                <div class="agent-card-body">{escape(summary)}</div>
-            </div>
-            """
-        )
-    st.markdown(f'<div class="agent-grid">{"".join(cards)}</div>', unsafe_allow_html=True)
+    rows = [agents[index : index + 3] for index in range(0, len(agents), 3)]
+    for row in rows:
+        columns = st.columns(3)
+        for column, agent_name in zip(columns, row):
+            result = run.agent_results.get(agent_name)
+            status = result.status if result else "pending"
+            summary = result.summary if result else "Waiting for this stage."
+            duration = f"{result.duration_seconds}s" if result else "-"
+            with column.container(border=True):
+                st.markdown(f"**{agent_display_name(agent_name)}**")
+                if status == "completed":
+                    st.success(f"Completed - {duration}")
+                elif status == "failed":
+                    st.error(f"Failed - {duration}")
+                else:
+                    st.info("Pending")
+                st.caption(summary)
+
+
+def render_agent_details(run: PipelineRun) -> None:
+    """Render detailed agent findings in expanders."""
+    for agent_name, result in run.agent_results.items():
+        with st.expander(agent_display_name(agent_name), expanded=False):
+            st.write(result.summary)
+            if result.findings:
+                st.markdown("**Findings**")
+                for finding in result.findings:
+                    st.write(f"- {finding}")
+            if result.metrics:
+                st.markdown("**Metrics**")
+                st.dataframe(
+                    pd.DataFrame(
+                        [{"metric": key, "value": value} for key, value in result.metrics.items()]
+                    ),
+                    width="stretch",
+                    row_height=table_row_height(),
+                )
 
 
 def render_cleaning_actions(run: PipelineRun) -> None:
@@ -2268,16 +2288,13 @@ def render_pipeline_history() -> None:
         st.caption("No completed pipeline runs have been saved yet.")
         return
     for item in runs:
-        st.markdown(
-            f"""
-            <div class="history-row">
-                <div class="agent-card-title">{escape(item["dataset_name"])}</div>
-                <div class="agent-card-meta">Run {escape(item["run_id"])} · {escape(item["created_at"])} · {item["rows"]:,} rows x {item["columns"]:,} columns</div>
-                <div class="agent-card-body">{escape(item.get("summary") or "No summary saved.")}</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        with st.container(border=True):
+            st.markdown(f"**{item['dataset_name']}**")
+            st.caption(
+                f"Run {item['run_id']} | {item['created_at']} | "
+                f"{item['rows']:,} rows x {item['columns']:,} columns"
+            )
+            st.write(item.get("summary") or "No summary saved.")
 
 
 def render_agent_pipeline(df: pd.DataFrame, source_name: str | None) -> None:
@@ -2323,6 +2340,7 @@ def render_agent_pipeline(df: pd.DataFrame, source_name: str | None) -> None:
         return
 
     render_agent_cards(run)
+    render_agent_details(run)
 
     stage_cols = st.columns(4)
     stage_cols[0].metric("Stage", pipeline_stage_label(run.current_stage))
