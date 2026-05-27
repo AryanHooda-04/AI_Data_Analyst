@@ -272,7 +272,9 @@ def theme_override_css() -> str:
         .data-story-card,
         .conversation-empty,
         .empty-workspace,
-        .topbar-command-panel,
+        [data-testid="stExpander"],
+        [data-testid="stExpander"] details,
+        [data-testid="stExpander"] summary,
         .st-key-top_workspace_nav,
         [data-testid="stVerticalBlockBorderWrapper"],
         [data-testid="stVerticalBlockBorderWrapper"] > div,
@@ -289,7 +291,6 @@ def theme_override_css() -> str:
             box-shadow: 0 14px 28px rgba(56, 189, 248, 0.14);
         }
 
-        .topbar-command-panel,
         .empty-workspace {
             background: linear-gradient(135deg, #111827 0%, #0f2238 100%) !important;
         }
@@ -317,6 +318,31 @@ def theme_override_css() -> str:
         [data-testid="stCaptionContainer"] *,
         small {
             color: var(--muted) !important;
+        }
+
+        [data-testid="stWidgetLabel"],
+        [data-testid="stWidgetLabel"] *,
+        [data-testid="stTextInput"] label,
+        [data-testid="stTextInput"] label *,
+        [data-testid="stSlider"] label,
+        [data-testid="stSlider"] label *,
+        [data-testid="stSlider"] *,
+        [data-testid="stRadio"] label,
+        [data-testid="stRadio"] label *,
+        [data-baseweb="radio"] *,
+        [data-testid="stExpander"] summary,
+        [data-testid="stExpander"] summary *,
+        .stTabs [data-baseweb="tab"],
+        .stTabs [data-baseweb="tab"] *,
+        .stTabs [data-baseweb="tab"] p {
+            color: var(--ink) !important;
+            opacity: 1 !important;
+        }
+
+        input::placeholder,
+        textarea::placeholder {
+            color: var(--muted) !important;
+            opacity: 1 !important;
         }
 
         .meta-pill,
@@ -354,6 +380,20 @@ def theme_override_css() -> str:
             color: var(--ink) !important;
         }
 
+        .stButton > button *,
+        .stDownloadButton > button *,
+        .st-key-theme_toggle_button button *,
+        [data-testid="stSidebar"] .stButton > button *,
+        [data-testid="stSidebar"] [data-testid="stFileUploader"] button *,
+        [data-testid="stSidebar"] [data-testid="stFileUploader"] button svg,
+        [data-testid="stSidebar"] .stDownloadButton button *,
+        .st-key-top_workspace_nav .stButton > button * {
+            color: inherit !important;
+            fill: currentColor !important;
+            stroke: currentColor !important;
+            opacity: 1 !important;
+        }
+
         .stButton > button:hover,
         .stDownloadButton > button:hover,
         .st-key-theme_toggle_button button:hover,
@@ -388,6 +428,19 @@ def theme_override_css() -> str:
         [data-testid="stMetric"],
         [data-testid="stMetric"] div {
             color: var(--ink) !important;
+        }
+
+        .stTabs [data-baseweb="tab-list"] {
+            border-bottom-color: var(--panel-border) !important;
+        }
+
+        .stTabs [data-baseweb="tab"][aria-selected="true"],
+        .stTabs [data-baseweb="tab"][aria-selected="true"] * {
+            color: var(--accent) !important;
+        }
+
+        [data-testid="stExpander"] {
+            overflow: hidden;
         }
 
         label,
@@ -2164,18 +2217,6 @@ def render_app_topbar(
                 mime="text/csv",
                 icon=":material/download:",
                 width="stretch",
-            )
-            st.markdown(
-                f"""
-                <div class="topbar-command-panel">
-                    <div class="topbar-command-title">Control Center</div>
-                    <div class="topbar-command-grid">
-                        <span class="meta-pill">AI ready</span>
-                        <span class="meta-pill">{escape(active_theme_mode())} theme</span>
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
             )
 
 
