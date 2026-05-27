@@ -121,9 +121,43 @@ Create `ai_data_analyst/.env` from `ai_data_analyst/.env.example`:
 OPENAI_API_KEY=your_openai_api_key_here
 OPENAI_SSL=insecure
 OPENAI_MODEL=gpt-5.2
+STREAMLIT_DEMO_MODE=true
+DEMO_AI_CALL_LIMIT=6
+DEMO_SESSION_TOKEN_BUDGET=8000
 ```
 
 `OPENAI_SSL=insecure` is intentionally supported for environments where corporate SSL inspection breaks OpenAI requests. This disables certificate verification for OpenAI API calls, so use it only in trusted local or corporate environments where this is required.
+
+## Hosted Demo Cost Guard
+
+The Streamlit version enables demo-mode cost controls by default so public users can try the app without accidentally creating a large API bill.
+
+Default safeguards:
+
+- 6 AI actions per browser session.
+- 8,000 estimated tokens per browser session.
+- 550 output tokens for Ask AI responses.
+- 700 output tokens for Code Generator responses.
+- 5,000 characters of dataset context sent to OpenAI.
+- 1,200 characters per user prompt.
+- 1,200 characters sent to text-to-speech.
+- 2 MB maximum audio input for transcription.
+
+These can be tuned in Streamlit Community Cloud secrets:
+
+```toml
+STREAMLIT_DEMO_MODE = "true"
+DEMO_AI_CALL_LIMIT = "6"
+DEMO_SESSION_TOKEN_BUDGET = "8000"
+DEMO_CONTEXT_CHAR_LIMIT = "5000"
+DEMO_MAX_REQUEST_CHARS = "1200"
+DEMO_TEXT_OUTPUT_TOKENS = "550"
+DEMO_CODE_OUTPUT_TOKENS = "700"
+DEMO_TTS_CHAR_LIMIT = "1200"
+DEMO_MAX_AUDIO_MB = "2"
+```
+
+Set `STREAMLIT_DEMO_MODE=false` only for private deployments where you control access and billing.
 
 ## Running The App
 

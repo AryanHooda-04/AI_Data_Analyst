@@ -116,6 +116,8 @@ def ask_ai(
     *,
     model: str = DEFAULT_MODEL,
     reasoning_effort: str = "none",
+    max_tokens: int = 1_200,
+    context_max_chars: int = 16_000,
 ) -> str:
     """Answer a natural-language question about the DataFrame."""
     question = clean_text(question)
@@ -134,7 +136,7 @@ def ask_ai(
         {"role": "system", "content": system_prompt},
         {
             "role": "user",
-            "content": "Dataset context for this analysis:\n\n" + dataframe_context(df),
+            "content": "Dataset context for this analysis:\n\n" + dataframe_context(df, max_chars=context_max_chars),
         },
     ]
     if history:
@@ -146,6 +148,7 @@ def ask_ai(
         model=model,
         reasoning_effort=reasoning_effort,
         temperature=0.2,
+        max_tokens=max_tokens,
     )
 
 

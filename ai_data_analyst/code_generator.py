@@ -14,6 +14,8 @@ def generate_code(
     *,
     model: str = "gpt-5.2",
     reasoning_effort: str = "none",
+    max_tokens: int = 1_400,
+    context_max_chars: int = 16_000,
 ) -> str:
     """Generate SQL and Pandas code for an analytical request."""
     user_request = clean_text(user_request)
@@ -31,7 +33,7 @@ Schema:
 {format_schema(df)}
 
 Sample and summary:
-{dataframe_context(df)}
+{dataframe_context(df, max_chars=context_max_chars)}
 
 User request:
 {user_request}
@@ -64,5 +66,5 @@ Rules:
         model=model,
         reasoning_effort=reasoning_effort,
         temperature=0.1,
-        max_tokens=1_400,
+        max_tokens=max_tokens,
     )

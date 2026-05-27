@@ -117,6 +117,38 @@ TRANSCRIPTION_OPTIONS = [
     "whisper-1",
 ]
 
+DEMO_REASONING_OPTIONS = ["none", "low"]
+
+
+def env_flag(name: str, default: bool) -> bool:
+    """Read a boolean environment flag with friendly true/false values."""
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() not in {"0", "false", "no", "off"}
+
+
+def env_int(name: str, default: int, *, minimum: int = 1) -> int:
+    """Read an integer environment setting while keeping a safe lower bound."""
+    try:
+        return max(minimum, int(os.getenv(name, str(default))))
+    except (TypeError, ValueError):
+        return default
+
+
+STREAMLIT_DEMO_MODE = env_flag("STREAMLIT_DEMO_MODE", True)
+DEMO_AI_CALL_LIMIT = env_int("DEMO_AI_CALL_LIMIT", 6, minimum=1)
+DEMO_SESSION_TOKEN_BUDGET = env_int("DEMO_SESSION_TOKEN_BUDGET", 8_000, minimum=1_000)
+DEMO_CONTEXT_CHAR_LIMIT = env_int("DEMO_CONTEXT_CHAR_LIMIT", 5_000, minimum=1_000)
+DEMO_MAX_REQUEST_CHARS = env_int("DEMO_MAX_REQUEST_CHARS", 1_200, minimum=200)
+DEMO_TEXT_OUTPUT_TOKENS = env_int("DEMO_TEXT_OUTPUT_TOKENS", 550, minimum=128)
+DEMO_CODE_OUTPUT_TOKENS = env_int("DEMO_CODE_OUTPUT_TOKENS", 700, minimum=128)
+DEMO_TRANSCRIPTION_TOKEN_COST = env_int("DEMO_TRANSCRIPTION_TOKEN_COST", 300, minimum=50)
+DEMO_TTS_CHAR_LIMIT = env_int("DEMO_TTS_CHAR_LIMIT", 1_200, minimum=200)
+DEMO_MAX_AUDIO_MB = env_int("DEMO_MAX_AUDIO_MB", 2, minimum=1)
+DEMO_MAX_AUDIO_BYTES = DEMO_MAX_AUDIO_MB * 1024 * 1024
+TOKEN_CHARS_ESTIMATE = 4
+
 
 st.set_page_config(
     page_title="AI Data Analyst",
@@ -747,6 +779,9 @@ def initialize_state() -> None:
         "last_transcript": "",
         "table_density": "Comfortable",
         "show_term_glossary": True,
+        "demo_ai_calls": 0,
+        "demo_estimated_tokens": 0,
+        "demo_last_usage": "",
     }
     for key, value in defaults.items():
         st.session_state.setdefault(key, value)
@@ -789,7 +824,151 @@ def selected_ai_model() -> str:
 
 def selected_reasoning_effort() -> str:
     """Return the active reasoning effort."""
-    return st.session_state.get("reasoning_effort", "none")
+    effort = st.session_state.get("reasoning_effort", "none")
+    if STREAMLIT_DEMO_MODE and effort not in DEMO_REASONING_OPTIONS:
+        return "low"
+    return effort
+
+
+def demo_mode_enabled() -> bool:
+    """Return whether public-demo cost controls are active."""
+    return STREAMLIT_DEMO_MODE
+
+
+def estimate_tokens(text: str | None) -> int:
+    """Estimate token count from character length for lightweight budget checks."""
+    compact = str(text or "")
+    return max(1, (len(compact) + TOKEN_CHARS_ESTIMATE - 1) // TOKEN_CHARS_ESTIMATE)
+
+
+def demo_context_chars() -> int:
+    """Return the context window sent to OpenAI for the current mode."""
+    return DEMO_CONTEXT_CHAR_LIMIT if demo_mode_enabled() else 16_000
+
+
+def ask_output_tokens() -> int:
+    """Return the text answer token cap for the current mode."""
+    return DEMO_TEXT_OUTPUT_TOKENS if demo_mode_enabled() else 1_200
+
+
+def code_output_tokens() -> int:
+    """Return the code-generation answer token cap for the current mode."""
+    return DEMO_CODE_OUTPUT_TOKENS if demo_mode_enabled() else 1_400
+
+
+def demo_tokens_used() -> int:
+    """Return estimated demo tokens consumed in this browser session."""
+    return int(st.session_state.get("demo_estimated_tokens", 0))
+
+
+def demo_tokens_remaining() -> int:
+    """Return estimated demo tokens remaining in this browser session."""
+    return max(0, DEMO_SESSION_TOKEN_BUDGET - demo_tokens_used())
+
+
+def projected_demo_tokens(user_text: str, max_output_tokens: int, *, include_context: bool = True) -> int:
+    """Estimate the upper-bound token use for a pending AI action."""
+    context_tokens = estimate_tokens("x" * DEMO_CONTEXT_CHAR_LIMIT) if include_context else 0
+    return estimate_tokens(user_text) + context_tokens + max_output_tokens + 150
+
+
+def demo_guard_allows(
+    action: str,
+    user_text: str,
+    max_output_tokens: int,
+    *,
+    include_context: bool = True,
+) -> bool:
+    """Block AI calls that would exceed the public demo session guardrail."""
+    if not demo_mode_enabled():
+        return True
+
+    if len(user_text) > DEMO_MAX_REQUEST_CHARS:
+        st.warning(f"Demo mode limits prompts to {DEMO_MAX_REQUEST_CHARS:,} characters. Shorten the request.")
+        return False
+
+    calls = int(st.session_state.get("demo_ai_calls", 0))
+    if calls >= DEMO_AI_CALL_LIMIT:
+        st.warning(
+            f"Demo AI limit reached: {DEMO_AI_CALL_LIMIT:,} AI actions per browser session. "
+            "This protects the hosted demo from runaway API spend."
+        )
+        return False
+
+    projected = projected_demo_tokens(user_text, max_output_tokens, include_context=include_context)
+    if demo_tokens_used() + projected > DEMO_SESSION_TOKEN_BUDGET:
+        st.warning(
+            f"Demo token budget reached for this browser session. "
+            f"Remaining estimate: {demo_tokens_remaining():,} tokens."
+        )
+        return False
+
+    st.session_state["demo_pending_action"] = action
+    return True
+
+
+def record_demo_usage(
+    action: str,
+    user_text: str,
+    response_text: str,
+    max_output_tokens: int,
+    *,
+    include_context: bool = True,
+) -> None:
+    """Record estimated usage after a successful AI call."""
+    if not demo_mode_enabled():
+        return
+
+    context_tokens = estimate_tokens("x" * DEMO_CONTEXT_CHAR_LIMIT) if include_context else 0
+    output_tokens = min(estimate_tokens(response_text), max_output_tokens)
+    used = estimate_tokens(user_text) + context_tokens + output_tokens + 150
+    st.session_state["demo_ai_calls"] = int(st.session_state.get("demo_ai_calls", 0)) + 1
+    st.session_state["demo_estimated_tokens"] = min(
+        DEMO_SESSION_TOKEN_BUDGET,
+        demo_tokens_used() + used,
+    )
+    st.session_state["demo_last_usage"] = f"{action}: about {used:,} estimated tokens"
+
+
+def truncate_demo_text(text: str) -> str:
+    """Trim user/voice text to the demo prompt length."""
+    if not demo_mode_enabled() or len(text) <= DEMO_MAX_REQUEST_CHARS:
+        return text
+    return text[:DEMO_MAX_REQUEST_CHARS].rstrip()
+
+
+def render_demo_guard_status() -> None:
+    """Show public-demo cost controls in the sidebar."""
+    if not demo_mode_enabled():
+        st.sidebar.markdown(
+            """
+            <div class="sidebar-card">
+                <div class="sidebar-card-title">Demo guard</div>
+                <div class="sidebar-card-value">Off</div>
+                <div class="sidebar-card-meta">AI calls use the configured model without demo caps.</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        return
+
+    calls = int(st.session_state.get("demo_ai_calls", 0))
+    used = demo_tokens_used()
+    remaining = demo_tokens_remaining()
+    last_usage = st.session_state.get("demo_last_usage") or "No AI actions yet"
+    st.sidebar.markdown(
+        f"""
+        <div class="sidebar-card">
+            <div class="sidebar-card-title">Demo guard</div>
+            <div class="sidebar-card-value">{calls:,}/{DEMO_AI_CALL_LIMIT:,} AI actions</div>
+            <div class="sidebar-card-meta">{used:,}/{DEMO_SESSION_TOKEN_BUDGET:,} estimated tokens used</div>
+            <div class="sidebar-card-meta">{remaining:,} estimated tokens remaining</div>
+            <div class="sidebar-card-meta">Output caps: {DEMO_TEXT_OUTPUT_TOKENS:,} answer / {DEMO_CODE_OUTPUT_TOKENS:,} code tokens</div>
+            <div class="sidebar-card-meta">{escape(last_usage)}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def set_navigation(label: str) -> None:
@@ -857,10 +1036,13 @@ def decode_audio_data_url(data_url: str) -> bytes:
     return base64.b64decode(data_url.split(",", 1)[1])
 
 
-def speech_safe_text(text: str) -> str:
+def speech_safe_text(text: str, max_chars: int | None = None) -> str:
     """Remove some Markdown noise before TTS."""
     cleaned = text.replace("###", "").replace("##", "").replace("**", "")
-    return cleaned.strip()
+    cleaned = cleaned.strip()
+    if max_chars is not None:
+        return cleaned[:max_chars].rstrip()
+    return cleaned
 
 
 def detect_datetime_columns(df: pd.DataFrame) -> list[str]:
@@ -1123,8 +1305,13 @@ def render_sidebar() -> tuple[pd.DataFrame | None, pd.DataFrame | None, str, str
     st.sidebar.selectbox("GPT model", MODEL_OPTIONS, key="model_choice")
     if st.session_state.get("model_choice") == "Custom":
         st.sidebar.text_input("Custom model ID", key="custom_model")
+    reasoning_options = DEMO_REASONING_OPTIONS if demo_mode_enabled() else REASONING_OPTIONS
+    if st.session_state.get("reasoning_effort") not in reasoning_options:
+        st.session_state["reasoning_effort"] = reasoning_options[0]
     if selected_ai_model().lower().startswith("gpt-5"):
-        st.sidebar.selectbox("Reasoning effort", REASONING_OPTIONS, key="reasoning_effort")
+        st.sidebar.selectbox("Reasoning effort", reasoning_options, key="reasoning_effort")
+        if demo_mode_enabled():
+            st.sidebar.caption("Demo mode caps reasoning to avoid hidden token spend.")
     else:
         st.sidebar.caption("Reasoning effort applies to GPT-5 family models.")
 
@@ -1142,6 +1329,7 @@ def render_sidebar() -> tuple[pd.DataFrame | None, pd.DataFrame | None, str, str
         """,
         unsafe_allow_html=True,
     )
+    render_demo_guard_status()
 
     return raw_df, filtered_df, navigation, source_name, load_error, active_filters
 
@@ -1530,12 +1718,33 @@ def render_voice_controls() -> None:
             st.audio(audio_bytes, format=f"audio/{extension}")
 
         if st.button("Transcribe to prompt", icon=":material/keyboard_voice:", disabled=audio_bytes is None):
+            if audio_bytes and demo_mode_enabled() and len(audio_bytes) > DEMO_MAX_AUDIO_BYTES:
+                st.warning(f"Demo mode limits audio input to {DEMO_MAX_AUDIO_MB:,} MB.")
+                return
+            if not demo_guard_allows(
+                "Voice transcription",
+                filename,
+                DEMO_TRANSCRIPTION_TOKEN_COST,
+                include_context=False,
+            ):
+                return
             with st.spinner("Transcribing voice input..."):
                 try:
                     transcript = transcribe_audio(
                         audio_bytes or b"",
                         filename=filename,
                         model=st.session_state.get("transcription_model", "gpt-4o-mini-transcribe"),
+                    )
+                    trimmed_transcript = truncate_demo_text(transcript)
+                    if trimmed_transcript != transcript:
+                        st.warning("Transcript was shortened to fit the hosted demo prompt limit.")
+                    transcript = trimmed_transcript
+                    record_demo_usage(
+                        "Voice transcription",
+                        filename,
+                        transcript,
+                        DEMO_TRANSCRIPTION_TOKEN_COST,
+                        include_context=False,
                     )
                     st.session_state["last_transcript"] = transcript
                     st.session_state["ask_text"] = transcript
@@ -1581,18 +1790,22 @@ def render_ask_ai(df: pd.DataFrame) -> None:
             "Ask anything about your data",
             placeholder="Example: Which region has the strongest revenue trend and why?",
             height=120,
+            max_chars=DEMO_MAX_REQUEST_CHARS if demo_mode_enabled() else None,
             key="ask_text",
         )
         submitted = st.form_submit_button("Analyze", type="primary")
 
     if submitted:
-        if not question.strip():
+        question = truncate_demo_text(question.strip())
+        if not question:
             st.warning("Enter a question before analyzing.")
             return
+        if not demo_guard_allows("Ask AI", question, ask_output_tokens()):
+            return
 
-        messages.append({"role": "user", "content": question.strip()})
+        messages.append({"role": "user", "content": question})
         with st.chat_message("user"):
-            st.markdown(question.strip())
+            st.markdown(question)
 
         with st.chat_message("assistant"):
             with st.spinner("Analyzing with AI..."):
@@ -1603,13 +1816,19 @@ def render_ask_ai(df: pd.DataFrame) -> None:
                         history=messages[:-1],
                         model=selected_ai_model(),
                         reasoning_effort=selected_reasoning_effort(),
+                        max_tokens=ask_output_tokens(),
+                        context_max_chars=demo_context_chars(),
                     )
                     render_ai_response(response)
                     messages.append({"role": "assistant", "content": response})
+                    record_demo_usage("Ask AI", question, response, ask_output_tokens())
                     if st.session_state.get("voice_output_enabled"):
                         with st.spinner("Generating voice response..."):
                             audio = text_to_speech(
-                                speech_safe_text(response),
+                                speech_safe_text(
+                                    response,
+                                    max_chars=DEMO_TTS_CHAR_LIMIT if demo_mode_enabled() else 12_000,
+                                ),
                                 voice=st.session_state.get("tts_voice", "coral"),
                             )
                         st.session_state["last_voice_audio"] = audio
@@ -1859,22 +2078,30 @@ def render_code_generator(df: pd.DataFrame) -> None:
             "Generate SQL or Pandas code",
             placeholder="Example: Find monthly revenue by region and show the top 5 months.",
             height=130,
+            max_chars=DEMO_MAX_REQUEST_CHARS if demo_mode_enabled() else None,
             key="code_request",
         )
         submitted = st.form_submit_button("Generate code", type="primary")
 
     if submitted:
-        if not request.strip():
+        request = truncate_demo_text(request.strip())
+        if not request:
             st.warning("Describe the code you want generated.")
+            return
+        if not demo_guard_allows("Code Generator", request, code_output_tokens()):
             return
         with st.spinner("Generating code..."):
             try:
-                st.session_state["generated_code"] = generate_code(
+                generated = generate_code(
                     df,
                     request,
                     model=selected_ai_model(),
                     reasoning_effort=selected_reasoning_effort(),
+                    max_tokens=code_output_tokens(),
+                    context_max_chars=demo_context_chars(),
                 )
+                st.session_state["generated_code"] = generated
+                record_demo_usage("Code Generator", request, generated, code_output_tokens())
             except Exception as exc:  # noqa: BLE001
                 st.error(str(exc))
 
