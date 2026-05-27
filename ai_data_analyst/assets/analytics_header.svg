@@ -1,0 +1,24 @@
+<svg width="420" height="260" viewBox="0 0 420 260" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Colorful analytics dashboard illustration">
+  <rect width="420" height="260" rx="28" fill="#F8FAFC"/>
+  <rect x="22" y="22" width="376" height="216" rx="24" fill="#FFFFFF" stroke="#D8E3EF"/>
+  <rect x="48" y="50" width="116" height="60" rx="14" fill="#E0F2FE"/>
+  <rect x="182" y="50" width="82" height="60" rx="14" fill="#DCFCE7"/>
+  <rect x="282" y="50" width="90" height="60" rx="14" fill="#FFE4E6"/>
+  <rect x="48" y="136" width="156" height="72" rx="16" fill="#F1F5F9"/>
+  <rect x="224" y="136" width="148" height="72" rx="16" fill="#F1F5F9"/>
+  <path d="M66 92C83 78 99 81 112 68C125 55 145 58 154 51" stroke="#2563EB" stroke-width="7" stroke-linecap="round"/>
+  <path d="M196 90L210 72L224 83L248 58" stroke="#0F766E" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M306 88C326 52 360 67 354 96" stroke="#E11D48" stroke-width="7" stroke-linecap="round"/>
+  <rect x="68" y="168" width="16" height="24" rx="5" fill="#2563EB"/>
+  <rect x="96" y="153" width="16" height="39" rx="5" fill="#0F766E"/>
+  <rect x="124" y="160" width="16" height="32" rx="5" fill="#F59E0B"/>
+  <rect x="152" y="145" width="16" height="47" rx="5" fill="#E11D48"/>
+  <circle cx="266" cy="172" r="23" fill="#BFDBFE"/>
+  <path d="M266 149A23 23 0 1 1 245.7 183" stroke="#2563EB" stroke-width="12" stroke-linecap="round"/>
+  <path d="M266 149A23 23 0 0 1 288.2 166" stroke="#0F766E" stroke-width="12" stroke-linecap="round"/>
+  <path d="M300 187H350" stroke="#CBD5E1" stroke-width="8" stroke-linecap="round"/>
+  <path d="M300 166H338" stroke="#CBD5E1" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="66" cy="62" r="5" fill="#2563EB"/>
+  <circle cx="196" cy="62" r="5" fill="#0F766E"/>
+  <circle cx="306" cy="62" r="5" fill="#E11D48"/>
+</svg>

@@ -41,6 +41,7 @@ from visualization import (
 
 APP_DIR = Path(__file__).parent
 SAMPLE_DATA = APP_DIR / "sample_data.csv"
+HEADER_ART = APP_DIR / "assets" / "analytics_header.svg"
 VOICE_RECORDER = components.declare_component("voice_recorder", path=str(APP_DIR / "voice_recorder"))
 
 NAV_ITEMS = [
@@ -150,6 +151,14 @@ def env_int(name: str, default: int, *, minimum: int = 1) -> int:
         return default
 
 
+def asset_data_uri(path: Path, mime_type: str) -> str:
+    """Return a local visual asset as a browser-safe data URI."""
+    if not path.exists():
+        return ""
+    encoded = base64.b64encode(path.read_bytes()).decode("ascii")
+    return f"data:{mime_type};base64,{encoded}"
+
+
 STREAMLIT_DEMO_MODE = env_flag("STREAMLIT_DEMO_MODE", True)
 DEMO_AI_CALL_LIMIT = env_int("DEMO_AI_CALL_LIMIT", 6, minimum=1)
 DEMO_SESSION_TOKEN_BUDGET = env_int("DEMO_SESSION_TOKEN_BUDGET", 8_000, minimum=1_000)
@@ -179,23 +188,42 @@ def inject_css() -> None:
         <style>
         :root {
             color-scheme: light;
-            --app-bg: #f5f7fb;
+            --app-bg: #f7f9fc;
             --panel: #ffffff;
-            --panel-soft: #f8fafc;
-            --panel-border: #e1e7f0;
-            --ink: #0f172a;
-            --muted: #64748b;
-            --sidebar-bg: #0b1220;
-            --sidebar-panel: #101b2f;
-            --sidebar-line: #24324a;
-            --sidebar-ink: #f8fafc;
-            --sidebar-muted: #aab5c8;
+            --panel-soft: #f9fbff;
+            --panel-border: #d9e4f2;
+            --ink: #102033;
+            --muted: #63748a;
+            --sidebar-bg: #f8fbff;
+            --sidebar-panel: #ffffff;
+            --sidebar-line: #d7e4f1;
+            --sidebar-ink: #102033;
+            --sidebar-muted: #64748b;
             --accent: #2563eb;
-            --accent-soft: #dbeafe;
-            --success: #15803d;
+            --accent-2: #0f766e;
+            --accent-3: #e11d48;
+            --accent-warm: #f59e0b;
+            --accent-soft: #e8f1ff;
+            --success: #0f8a55;
             --warning: #b45309;
             --danger: #b91c1c;
-            --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+            --shadow-sm: 0 1px 2px rgba(16, 32, 51, 0.06);
+            --shadow-md: 0 12px 30px rgba(16, 32, 51, 0.08);
+        }
+
+        @keyframes page-rise {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes soft-float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+
+        @keyframes accent-sweep {
+            from { transform: translateX(-120%); }
+            to { transform: translateX(120%); }
         }
 
         header[data-testid="stHeader"] {
@@ -209,7 +237,8 @@ def inject_css() -> None:
         .stApp,
         [data-testid="stAppViewContainer"],
         [data-testid="stMain"] {
-            background: var(--app-bg) !important;
+            background:
+                linear-gradient(180deg, #fbfdff 0%, #f2faf6 42%, #f8f7ff 100%) !important;
             color: var(--ink) !important;
         }
 
@@ -217,6 +246,7 @@ def inject_css() -> None:
             padding-top: 0.85rem;
             padding-bottom: 2.5rem;
             max-width: 1180px;
+            animation: page-rise 340ms ease-out;
         }
 
         h1, h2, h3, h4, h5, h6, p, label, span, div {
@@ -244,9 +274,10 @@ def inject_css() -> None:
         }
 
         [data-testid="stSidebar"] {
-            background: var(--sidebar-bg) !important;
+            background:
+                linear-gradient(180deg, #ffffff 0%, #f2faf6 48%, #f7f8ff 100%) !important;
             border-right: 1px solid var(--sidebar-line);
-            box-shadow: 1px 0 0 rgba(15, 23, 42, 0.04);
+            box-shadow: 4px 0 28px rgba(16, 32, 51, 0.06);
         }
 
         [data-testid="stSidebar"] > div {
@@ -276,7 +307,7 @@ def inject_css() -> None:
         }
 
         .sidebar-brand-title {
-            color: var(--sidebar-ink) !important;
+            color: #0f2f2b !important;
             font-size: 1.35rem;
             font-weight: 760;
             line-height: 1.2;
@@ -289,7 +320,7 @@ def inject_css() -> None:
         }
 
         .sidebar-section-title {
-            color: #cbd5e1 !important;
+            color: #52677d !important;
             font-size: 0.74rem;
             font-weight: 760;
             letter-spacing: 0.04em;
@@ -325,8 +356,8 @@ def inject_css() -> None:
         }
 
         [data-testid="stSidebar"] [data-testid="stFileUploader"] section {
-            background: #0b1220 !important;
-            border: 1px dashed #3b4a63 !important;
+            background: #ffffff !important;
+            border: 1px dashed #99c7bd !important;
             border-radius: 8px !important;
             padding: 0.75rem !important;
         }
@@ -352,12 +383,12 @@ def inject_css() -> None:
         }
 
         [data-testid="stSidebar"] [role="radiogroup"] label:hover {
-            background: #17233a;
-            border-color: #26364f;
+            background: #eef8f6;
+            border-color: #b9dad3;
         }
 
         [data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) {
-            background: #1d4ed8;
+            background: #dff7f1;
             border-color: #3b82f6;
         }
 
@@ -382,7 +413,7 @@ def inject_css() -> None:
         }
 
         [data-testid="stSidebar"] [data-testid="stExpander"] summary:hover {
-            background: #17233a !important;
+            background: #edf7f5 !important;
         }
 
         [data-testid="stSidebar"] .stButton > button {
@@ -396,17 +427,20 @@ def inject_css() -> None:
             padding-left: 0.65rem;
             padding-right: 0.65rem;
             white-space: nowrap;
-            transition: border-color 120ms ease, background 120ms ease, transform 120ms ease;
+            box-shadow: 0 1px 2px rgba(16, 32, 51, 0.04);
+            transition: border-color 150ms ease, background 150ms ease, transform 150ms ease, box-shadow 150ms ease;
         }
 
         [data-testid="stSidebar"] .stButton > button:hover {
-            background: #17233a !important;
-            border-color: #36506f !important;
+            background: #eef8f6 !important;
+            border-color: #a8d5cc !important;
+            box-shadow: 0 8px 18px rgba(15, 118, 110, 0.12);
+            transform: translateY(-1px);
         }
 
         [data-testid="stSidebar"] .stButton > button[kind="primary"] {
-            background: #1d4ed8 !important;
-            border-color: #3b82f6 !important;
+            background: linear-gradient(90deg, var(--accent), var(--accent-2)) !important;
+            border-color: transparent !important;
             color: #ffffff !important;
         }
 
@@ -451,6 +485,34 @@ def inject_css() -> None:
             margin-top: 0.18rem;
         }
 
+        .app-visual-card {
+            position: relative;
+            min-height: 112px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #cfe4f4;
+            background: linear-gradient(135deg, #eff6ff 0%, #ecfdf5 55%, #fff7ed 100%);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .app-visual-card::after {
+            content: "";
+            position: absolute;
+            inset: auto -35% 0 -35%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--accent), var(--accent-2), var(--accent-warm), transparent);
+            animation: accent-sweep 4.5s ease-in-out infinite;
+            opacity: 0.75;
+        }
+
+        .app-visual-card img {
+            display: block;
+            width: 100%;
+            height: 112px;
+            object-fit: cover;
+            animation: soft-float 7s ease-in-out infinite;
+        }
+
         .app-meta-row,
         .filter-chip-row,
         .readiness-strip,
@@ -476,9 +538,9 @@ def inject_css() -> None:
             padding: 0.2rem 0.5rem;
             font-size: 0.73rem;
             font-weight: 680;
-            border: 1px solid #cbd5e1;
-            background: var(--panel-soft);
-            color: #334155 !important;
+            border: 1px solid #c9ddf4;
+            background: #f2f8ff;
+            color: #1e3a5f !important;
         }
 
         .filter-chip-row {
@@ -497,7 +559,7 @@ def inject_css() -> None:
         }
 
         .readiness-band {
-            background: #ffffff;
+            background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 55%, #eff6ff 100%);
             border: 1px solid var(--panel-border);
             border-radius: 8px;
             padding: 0.65rem 0.75rem;
@@ -708,11 +770,28 @@ def inject_css() -> None:
         }
 
         [data-testid="stMetric"] {
+            position: relative;
+            overflow: hidden;
             background: var(--panel);
             border: 1px solid var(--panel-border);
             border-radius: 8px;
             padding: 0.72rem 0.85rem;
             box-shadow: var(--shadow-sm);
+            transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+        }
+
+        [data-testid="stMetric"]::before {
+            content: "";
+            position: absolute;
+            inset: 0 0 auto 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--accent-2), var(--accent-warm));
+        }
+
+        [data-testid="stMetric"]:hover {
+            border-color: #b6d7ef;
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
         }
 
         [data-testid="stMetric"] label,
@@ -733,9 +812,9 @@ def inject_css() -> None:
             padding: 0.25rem 0.55rem;
             font-size: 0.78rem;
             font-weight: 680;
-            background: var(--accent-soft);
-            color: #1e40af !important;
-            border: 1px solid #bfdbfe;
+            background: #e8f7f4;
+            color: #0f5f59 !important;
+            border: 1px solid #b7e1d8;
         }
 
         .status-pill-ok {
@@ -757,14 +836,20 @@ def inject_css() -> None:
         }
 
         .insight-card {
-            background: var(--panel);
+            background: linear-gradient(135deg, #ffffff 0%, #fbfdff 100%);
             border: 1px solid var(--panel-border);
-            border-left: 4px solid var(--accent);
+            border-left: 4px solid var(--accent-2);
             border-radius: 8px;
             padding: 0.75rem 0.9rem;
             margin-bottom: 0.55rem;
             color: var(--ink) !important;
             box-shadow: var(--shadow-sm);
+            transition: transform 160ms ease, box-shadow 160ms ease;
+        }
+
+        .insight-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
         }
 
         .insight-badge {
@@ -879,12 +964,13 @@ def inject_css() -> None:
             border: 1px solid #c9d2e3 !important;
             min-height: 2.35rem;
             font-weight: 650 !important;
+            transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease, background 150ms ease;
         }
 
         .stButton > button[kind="primary"],
         [data-testid="stFormSubmitButton"] button[kind="primary"] {
-            background: var(--accent) !important;
-            border-color: var(--accent) !important;
+            background: linear-gradient(90deg, var(--accent), var(--accent-2)) !important;
+            border-color: transparent !important;
             color: #ffffff !important;
         }
 
@@ -897,6 +983,8 @@ def inject_css() -> None:
         .stDownloadButton > button:hover {
             border-color: var(--accent) !important;
             color: var(--accent) !important;
+            transform: translateY(-1px);
+            box-shadow: 0 8px 18px rgba(37, 99, 235, 0.12);
         }
 
         div[data-testid="stDataFrame"] {
@@ -1590,8 +1678,9 @@ def render_app_topbar(
     source = escape(source_name or "Dataset")
     navigation = st.session_state.get("navigation", "Overview")
     page_title, page_subtitle = PAGE_COPY.get(navigation, ("Analysis Workspace", "Explore the active dataset."))
+    art_uri = asset_data_uri(HEADER_ART, "image/svg+xml")
     with st.container(border=True):
-        left, right = st.columns([5, 1.15], vertical_alignment="center")
+        left, right = st.columns([4.4, 1.6], vertical_alignment="center")
         with left:
             st.markdown(
                 f"""
@@ -1607,6 +1696,11 @@ def render_app_topbar(
                 unsafe_allow_html=True,
             )
         with right:
+            if art_uri:
+                st.markdown(
+                    f'<div class="app-visual-card"><img src="{art_uri}" alt="Analytics dashboard visual" /></div>',
+                    unsafe_allow_html=True,
+                )
             st.download_button(
                 "Export CSV",
                 data=df.to_csv(index=False).encode("utf-8"),
