@@ -304,11 +304,18 @@ def theme_override_css() -> str:
         [data-testid="stSidebar"] [data-testid="stExpander"] details,
         [data-testid="stSidebar"] [data-testid="stExpander"] summary,
         .sidebar-card,
+        .topbar-command-panel,
         .readiness-band,
+        .presentation-band,
+        .suggestion-panel,
         .insight-card,
         .data-story-card,
+        .ai-response-card,
         .conversation-empty,
         .empty-workspace,
+        .glossary-card,
+        .agent-card,
+        .history-row,
         [data-testid="stExpander"],
         [data-testid="stExpander"] details,
         [data-testid="stExpander"] summary,
@@ -332,12 +339,74 @@ def theme_override_css() -> str:
             background: linear-gradient(135deg, #111827 0%, #0f2238 100%) !important;
         }
 
+        .presentation-band {
+            background: linear-gradient(135deg, #111827 0%, #0f2238 100%) !important;
+            border-color: var(--panel-border) !important;
+            box-shadow: 0 16px 34px rgba(0, 0, 0, 0.18);
+        }
+
+        .approval-panel {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.13), rgba(17, 24, 39, 0.96)) !important;
+            border-color: rgba(251, 191, 36, 0.48) !important;
+            color: #fef3c7 !important;
+            box-shadow: 0 16px 34px rgba(0, 0, 0, 0.18);
+        }
+
+        .approval-panel .presentation-heading {
+            color: #fde68a !important;
+        }
+
+        .approval-panel .muted {
+            color: #f8dfaa !important;
+        }
+
+        [data-testid="stPlotlyChart"] {
+            background: var(--panel) !important;
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            padding: 0.35rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        [data-testid="stPlotlyChart"] > div {
+            background: transparent !important;
+        }
+
+        [data-testid="stDataFrame"] {
+            background: var(--panel) !important;
+            border: 1px solid var(--panel-border) !important;
+            border-radius: 8px;
+            padding: 0.12rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        [data-testid="stDataFrame"] [data-testid="data-grid-canvas"] {
+            border-radius: 6px;
+            filter: invert(0.92) hue-rotate(180deg) saturate(0.78) brightness(0.92);
+        }
+
+        [data-testid="stElementToolbarButtonContainer"] {
+            background: #111827 !important;
+            border: 1px solid var(--panel-border) !important;
+            box-shadow: var(--shadow-sm) !important;
+        }
+
+        [data-testid="stElementToolbarButtonContainer"] *,
+        [data-testid="stElementToolbarButtonIcon"] {
+            color: var(--ink) !important;
+            fill: currentColor !important;
+            stroke: currentColor !important;
+        }
+
         .app-title,
         .app-eyebrow,
         .sidebar-brand-title,
         .sidebar-card-value,
         .data-story-value,
         .readiness-title,
+        .presentation-heading,
+        .agent-card-title,
+        .glossary-title,
         .conversation-empty-title,
         .empty-title,
         .ai-response-card-title,
@@ -357,7 +426,11 @@ def theme_override_css() -> str:
         .sidebar-card-title,
         .section-kicker,
         .conversation-empty-body,
+        .ai-response-card-body,
+        .agent-card-body,
+        .glossary-body,
         .empty-lead,
+        .muted,
         [data-testid="stCaptionContainer"] *,
         .stCaptionContainer,
         .stCaptionContainer *,
@@ -1907,6 +1980,58 @@ def table_row_height() -> int:
     return 28 if st.session_state.get("table_density") == "Compact" else 36
 
 
+def apply_plotly_theme(fig):
+    """Align Plotly figures with the active Streamlit theme."""
+    if active_theme_mode() != "Dark":
+        fig.update_layout(
+            template="plotly_white",
+            paper_bgcolor="#ffffff",
+            plot_bgcolor="#ffffff",
+            font={"color": "#102033"},
+            title_font={"color": "#102033"},
+        )
+        fig.update_xaxes(gridcolor="#e5edf6", linecolor="#cbd5e1", tickfont={"color": "#425875"})
+        fig.update_yaxes(gridcolor="#e5edf6", linecolor="#cbd5e1", tickfont={"color": "#425875"})
+        return fig
+
+    ink = "#e7eef8"
+    muted = "#a9bdd5"
+    grid = "#26374f"
+    fig.update_layout(
+        template="plotly_dark",
+        paper_bgcolor="#111827",
+        plot_bgcolor="#0f172a",
+        font={"color": ink},
+        title_font={"color": ink, "size": 16},
+        legend={"bgcolor": "rgba(17, 24, 39, 0)", "font": {"color": ink}},
+        margin={"l": 42, "r": 24, "t": 58, "b": 42},
+    )
+    fig.update_xaxes(
+        gridcolor=grid,
+        linecolor="#334155",
+        zerolinecolor="#334155",
+        tickfont={"color": muted},
+        title_font={"color": ink},
+        automargin=True,
+    )
+    fig.update_yaxes(
+        gridcolor=grid,
+        linecolor="#334155",
+        zerolinecolor="#334155",
+        tickfont={"color": muted},
+        title_font={"color": ink},
+        automargin=True,
+    )
+    fig.update_coloraxes(colorbar={"tickfont": {"color": muted}, "title": {"font": {"color": ink}}})
+    fig.update_traces(textfont={"color": ink}, selector={"type": "heatmap"})
+    return fig
+
+
+def render_plotly_chart(fig, *, key: str, width: str = "stretch") -> None:
+    """Render a Plotly chart with app theme-aware styling."""
+    st.plotly_chart(apply_plotly_theme(fig), width=width, key=key)
+
+
 def audio_extension_from_name(name: str | None, fallback: str = "webm") -> str:
     """Return a safe file extension for uploaded or recorded audio."""
     if not name or "." not in name:
@@ -2570,15 +2695,13 @@ def render_column_profiler(df: pd.DataFrame) -> None:
 
     with right:
         if pd.api.types.is_numeric_dtype(df[selected_column]):
-            st.plotly_chart(
+            render_plotly_chart(
                 plot_histogram(df, selected_column),
-                width="stretch",
                 key=f"column_profile_histogram_{selected_column}",
             )
         else:
-            st.plotly_chart(
+            render_plotly_chart(
                 plot_bar(df, selected_column),
-                width="stretch",
                 key=f"column_profile_bar_{selected_column}",
             )
 
@@ -2595,9 +2718,8 @@ def render_overview(df: pd.DataFrame) -> None:
         best_metric = choose_column(numeric_columns(df), ("revenue", "sales", "amount", "profit", "units", "score"))
         if best_metric:
             st.info(f"Profiling the most relevant metric detected: {best_metric}.")
-            st.plotly_chart(
+            render_plotly_chart(
                 plot_histogram(df, best_metric),
-                width="stretch",
                 key=f"overview_focus_histogram_{best_metric}",
             )
     elif st.session_state.get("overview_focus") == "Review correlations":
@@ -2606,7 +2728,7 @@ def render_overview(df: pd.DataFrame) -> None:
             st.info("Correlation review needs at least two numeric columns.")
         else:
             st.info("Correlation review is active.")
-            st.plotly_chart(plot_heatmap(df), width="stretch", key="overview_focus_correlation_heatmap")
+            render_plotly_chart(plot_heatmap(df), key="overview_focus_correlation_heatmap")
     render_insight_cards(df, limit=3)
 
     st.subheader("Dataset Preview")
@@ -2638,7 +2760,7 @@ def render_overview(df: pd.DataFrame) -> None:
     if corr.empty:
         st.info("At least two numeric columns are required for correlations.")
     else:
-        st.plotly_chart(plot_heatmap(df), width="stretch", key="overview_correlation_heatmap")
+        render_plotly_chart(plot_heatmap(df), key="overview_correlation_heatmap")
         with st.expander("Show correlation values"):
             st.dataframe(corr, width="stretch", row_height=table_row_height())
 
@@ -3012,7 +3134,7 @@ def render_visualizations(df: pd.DataFrame) -> None:
             return
 
     with right:
-        st.plotly_chart(fig, width="stretch", key=f"visualization_builder_{chart_type}")
+        render_plotly_chart(fig, key=f"visualization_builder_{chart_type}")
 
     with st.expander("Chart source data"):
         st.dataframe(df.head(250), width="stretch", height=260, row_height=table_row_height())
@@ -3103,15 +3225,13 @@ def render_presentation_mode(df: pd.DataFrame) -> None:
     chart_left, chart_right = st.columns(2)
     with chart_left:
         if date_col and metric:
-            st.plotly_chart(
+            render_plotly_chart(
                 plot_line(df, date_col, metric),
-                width="stretch",
                 key="presentation_primary_line",
             )
         elif metric:
-            st.plotly_chart(
+            render_plotly_chart(
                 plot_histogram(df, metric),
-                width="stretch",
                 key="presentation_primary_histogram",
             )
         else:
@@ -3119,18 +3239,17 @@ def render_presentation_mode(df: pd.DataFrame) -> None:
 
     with chart_right:
         if category and metric:
-            st.plotly_chart(
+            render_plotly_chart(
                 plot_aggregated_bar(df, category, metric, "sum"),
-                width="stretch",
                 key="presentation_segment_bar",
             )
         elif len(nums) >= 2:
-            st.plotly_chart(plot_heatmap(df), width="stretch", key="presentation_heatmap")
+            render_plotly_chart(plot_heatmap(df), key="presentation_heatmap")
         else:
             st.info("Add category and numeric columns to show segment performance.")
 
     if metric:
-        st.plotly_chart(plot_box(df, metric, category), width="stretch", key="presentation_box")
+        render_plotly_chart(plot_box(df, metric, category), key="presentation_box")
 
 
 def agent_display_name(agent_name: str) -> str:
@@ -3247,7 +3366,7 @@ def render_pipeline_chart(df: pd.DataFrame, spec: dict[str, object], idx: int) -
             st.info(f"Unsupported chart recommendation: {chart_type}")
             return
         fig.update_layout(title=title)
-        st.plotly_chart(fig, width="stretch", key=f"pipeline_chart_{idx}_{chart_type}")
+        render_plotly_chart(fig, key=f"pipeline_chart_{idx}_{chart_type}")
     except Exception as exc:  # noqa: BLE001
         st.warning(f"Could not render {title}: {exc}")
 
