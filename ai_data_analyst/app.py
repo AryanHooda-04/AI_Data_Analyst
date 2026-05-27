@@ -46,16 +46,17 @@ SAMPLE_DATA = APP_DIR / "sample_data.csv"
 APP_NAME = "InsightAnalytica"
 APP_TAGLINE = "Enterprise AI data intelligence"
 HEADER_ART = APP_DIR / "assets" / "insightanalytica_logo.png"
+BRAND_MARK = APP_DIR / "assets" / "insightanalytica_mark.png"
 VOICE_RECORDER = components.declare_component("voice_recorder", path=str(APP_DIR / "voice_recorder"))
 
 NAV_ITEMS = [
-    {"label": "Overview", "icon": ":material/dashboard:"},
-    {"label": "Conversation AI", "icon": ":material/forum:"},
-    {"label": "Visualizations", "icon": ":material/monitoring:"},
-    {"label": "Insights & Anomalies", "icon": ":material/troubleshoot:"},
-    {"label": "Agent Pipeline", "icon": ":material/account_tree:"},
-    {"label": "Code Generator", "icon": ":material/code:"},
-    {"label": "Presentation Mode", "icon": ":material/present_to_all:"},
+    {"label": "Overview", "short": "Overview", "icon": ":material/dashboard:"},
+    {"label": "Conversation AI", "short": "AI Chat", "icon": ":material/forum:"},
+    {"label": "Visualizations", "short": "Charts", "icon": ":material/monitoring:"},
+    {"label": "Insights & Anomalies", "short": "Insights", "icon": ":material/troubleshoot:"},
+    {"label": "Agent Pipeline", "short": "Pipeline", "icon": ":material/account_tree:"},
+    {"label": "Code Generator", "short": "Code", "icon": ":material/code:"},
+    {"label": "Presentation Mode", "short": "Present", "icon": ":material/present_to_all:"},
 ]
 
 PAGE_COPY = {
@@ -361,31 +362,38 @@ def inject_css() -> None:
             margin-bottom: 0.85rem;
         }
 
+        .sidebar-brand-lockup {
+            display: flex;
+            align-items: center;
+            gap: 0.72rem;
+        }
+
+        .brand-mark,
         .sidebar-brand-logo {
-            width: 100%;
-            max-width: 176px;
-            height: 70px;
+            flex: 0 0 auto;
+            width: 48px;
+            height: 48px;
             border: 1px solid #d5e8f6;
-            border-radius: 8px;
-            background: linear-gradient(135deg, #eaf7ff 0%, #ffffff 100%);
+            border-radius: 12px;
+            background: linear-gradient(135deg, #dff4ff 0%, #f8fbff 100%);
             display: flex;
             align-items: center;
             justify-content: center;
             overflow: hidden;
-            box-shadow: var(--shadow-sm);
-            margin-bottom: 0.65rem;
+            box-shadow: 0 9px 22px rgba(29, 78, 216, 0.16);
         }
 
+        .brand-mark img,
         .sidebar-brand-logo img {
             width: 100%;
             height: 100%;
-            object-fit: contain;
+            object-fit: cover;
             object-position: center;
         }
 
         .sidebar-brand-title {
             color: #0b2545 !important;
-            font-size: 1.35rem;
+            font-size: 1.12rem;
             font-weight: 760;
             line-height: 1.2;
         }
@@ -562,6 +570,41 @@ def inject_css() -> None:
             margin-top: 0.18rem;
         }
 
+        .app-brandline {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.62rem;
+        }
+
+        .app-brandline .brand-mark {
+            width: 42px;
+            height: 42px;
+            border-radius: 11px;
+        }
+
+        .topbar-command-panel {
+            background: linear-gradient(135deg, #f8fbff 0%, #eef7ff 100%);
+            border: 1px solid #d7e7f7;
+            border-radius: 8px;
+            padding: 0.72rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .topbar-command-title {
+            color: #334155 !important;
+            font-size: 0.72rem;
+            font-weight: 760;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 0.45rem;
+        }
+
+        .topbar-command-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.38rem;
+        }
+
         .app-visual-card {
             position: relative;
             min-height: 112px;
@@ -597,6 +640,41 @@ def inject_css() -> None:
         .app-logo-card img {
             object-fit: contain;
             object-position: center;
+        }
+
+        .st-key-top_workspace_nav {
+            background: #ffffff;
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            padding: 0.45rem;
+            margin: 0.4rem 0 0.85rem 0;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .st-key-top_workspace_nav .stButton > button {
+            min-height: 2.15rem;
+            border-radius: 7px !important;
+            border: 1px solid #d9e4f2 !important;
+            background: #ffffff !important;
+            color: #1e293b !important;
+            justify-content: center;
+            font-size: 0.86rem;
+            font-weight: 680;
+            padding-left: 0.55rem;
+            padding-right: 0.55rem;
+        }
+
+        .st-key-top_workspace_nav .stButton > button:hover {
+            border-color: #9ec8f7 !important;
+            background: #f3f8ff !important;
+            transform: translateY(-1px);
+            box-shadow: 0 8px 18px rgba(29, 78, 216, 0.10);
+        }
+
+        .st-key-top_workspace_nav .stButton > button[kind="primary"] {
+            background: linear-gradient(90deg, var(--accent), var(--accent-2)) !important;
+            color: #ffffff !important;
+            border-color: transparent !important;
         }
 
         .app-meta-row,
@@ -1665,14 +1743,18 @@ def apply_sidebar_filters(df: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
 
 def render_sidebar() -> tuple[pd.DataFrame | None, pd.DataFrame | None, str, str | None, str | None, list[str]]:
     """Render sidebar controls and return dataset state."""
-    logo_uri = asset_data_uri(HEADER_ART, "image/png")
+    logo_uri = asset_data_uri(BRAND_MARK, "image/png")
     logo_html = f'<img src="{logo_uri}" alt="{APP_NAME} logo" />' if logo_uri else ""
     st.sidebar.markdown(
         f"""
         <div class="sidebar-brand">
-            <div class="sidebar-brand-logo">{logo_html}</div>
-            <div class="sidebar-brand-title">{APP_NAME}</div>
-            <div class="sidebar-brand-subtitle">{APP_TAGLINE}</div>
+            <div class="sidebar-brand-lockup">
+                <div class="sidebar-brand-logo">{logo_html}</div>
+                <div>
+                    <div class="sidebar-brand-title">{APP_NAME}</div>
+                    <div class="sidebar-brand-subtitle">{APP_TAGLINE}</div>
+                </div>
+            </div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -1800,14 +1882,20 @@ def render_app_topbar(
     source = escape(source_name or "Dataset")
     navigation = st.session_state.get("navigation", "Overview")
     page_title, page_subtitle = PAGE_COPY.get(navigation, ("Analysis Workspace", "Explore the active dataset."))
-    art_uri = asset_data_uri(HEADER_ART, "image/png")
+    mark_uri = asset_data_uri(BRAND_MARK, "image/png")
+    mark_html = f'<span class="brand-mark"><img src="{mark_uri}" alt="{APP_NAME} mark" /></span>' if mark_uri else ""
     with st.container(border=True):
-        left, right = st.columns([4.4, 1.6], vertical_alignment="center")
+        left, right = st.columns([4.2, 1.8], vertical_alignment="center")
         with left:
             st.markdown(
                 f"""
-                <div class="app-eyebrow">{APP_NAME}</div>
-                <div class="app-title">{escape(page_title)}</div>
+                <div class="app-brandline">
+                    {mark_html}
+                    <div>
+                        <div class="app-eyebrow">{APP_NAME}</div>
+                        <div class="app-title">{escape(page_title)}</div>
+                    </div>
+                </div>
                 <div class="app-subtitle">{escape(page_subtitle)}</div>
                 <div class="app-meta-row">
                     <span class="meta-pill">{source}</span>
@@ -1818,11 +1906,18 @@ def render_app_topbar(
                 unsafe_allow_html=True,
             )
         with right:
-            if art_uri:
-                st.markdown(
-                    f'<div class="app-visual-card app-logo-card"><img src="{art_uri}" alt="{APP_NAME} logo" /></div>',
-                    unsafe_allow_html=True,
-                )
+            st.markdown(
+                f"""
+                <div class="topbar-command-panel">
+                    <div class="topbar-command-title">Control Center</div>
+                    <div class="topbar-command-grid">
+                        <span class="meta-pill">AI ready</span>
+                        <span class="meta-pill">Governed view</span>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
             st.download_button(
                 "Export CSV",
                 data=df.to_csv(index=False).encode("utf-8"),
@@ -1830,6 +1925,24 @@ def render_app_topbar(
                 mime="text/csv",
                 icon=":material/download:",
                 width="stretch",
+            )
+
+
+def render_top_workspace_nav(active_navigation: str) -> None:
+    """Render a clickable workspace switcher near the app header."""
+    with st.container(key="top_workspace_nav"):
+        st.markdown('<div class="sidebar-section-title">Workspace</div>', unsafe_allow_html=True)
+        cols = st.columns(len(NAV_ITEMS))
+        for idx, item in enumerate(NAV_ITEMS):
+            label = item["label"]
+            cols[idx].button(
+                item.get("short", label),
+                key=f"top_nav_{label}",
+                icon=item["icon"],
+                type="primary" if active_navigation == label else "secondary",
+                width="stretch",
+                on_click=set_navigation,
+                args=(label,),
             )
 
 
@@ -1941,6 +2054,7 @@ def render_header(
     active_label = "Active rows" if len(df) != len(raw_df) else "Rows"
 
     render_app_topbar(df, raw_df, source_name, active_filters)
+    render_top_workspace_nav(st.session_state.get("navigation", "Overview"))
     render_filter_chips(active_filters)
     if show_readiness and st.session_state.get("navigation") == "Overview":
         with st.expander("Dataset readiness", expanded=False):
