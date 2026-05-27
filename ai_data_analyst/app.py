@@ -198,6 +198,11 @@ def theme_css_variables() -> str:
             --accent-3: #fb7185;
             --accent-warm: #fbbf24;
             --accent-soft: #0d2a48;
+            --code-bg: #08111f;
+            --code-inline-bg: #17233a;
+            --code-border: #2b405d;
+            --code-ink: #dbeafe;
+            --quote-bg: rgba(56, 189, 248, 0.09);
             --success: #34d399;
             --warning: #fbbf24;
             --danger: #fb7185;
@@ -223,6 +228,11 @@ def theme_css_variables() -> str:
             --accent-3: #e11d48;
             --accent-warm: #f59e0b;
             --accent-soft: #e8f1ff;
+            --code-bg: #f8fbff;
+            --code-inline-bg: #edf4ff;
+            --code-border: #cbdcf1;
+            --code-ink: #17324d;
+            --quote-bg: #f0f7ff;
             --success: #0f8a55;
             --warning: #b45309;
             --danger: #b91c1c;
@@ -452,9 +462,23 @@ def theme_override_css() -> str:
 
         [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] code,
         [data-testid="stMarkdownContainer"] code {
-            background: #17233a !important;
-            border: 1px solid var(--panel-border) !important;
-            color: #dbeafe !important;
+            background: var(--code-inline-bg) !important;
+            border: 1px solid var(--code-border) !important;
+            color: var(--code-ink) !important;
+        }
+
+        [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] pre,
+        [data-testid="stMarkdownContainer"] pre {
+            background: var(--code-bg) !important;
+            border-color: var(--code-border) !important;
+            border-left-color: var(--accent) !important;
+        }
+
+        [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] pre code,
+        [data-testid="stMarkdownContainer"] pre code {
+            background: transparent !important;
+            border: 0 !important;
+            color: var(--code-ink) !important;
         }
 
         [data-testid="stChatMessage"] [data-testid="stVerticalBlockBorderWrapper"],
@@ -1398,6 +1422,146 @@ def inject_css() -> None:
         .ai-response-card-body {
             color: #334155 !important;
             line-height: 1.55;
+        }
+
+        [data-testid="stChatMessage"] [data-testid="stVerticalBlockBorderWrapper"] {
+            background: var(--panel) !important;
+            border: 1px solid var(--panel-border) !important;
+            border-radius: 10px !important;
+            box-shadow: var(--shadow-sm);
+        }
+
+        [data-testid="stChatMessage"] [data-testid="stVerticalBlockBorderWrapper"] > div {
+            background: transparent !important;
+        }
+
+        [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] {
+            color: var(--ink) !important;
+            font-size: 0.95rem;
+            line-height: 1.66;
+        }
+
+        [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] h1,
+        [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] h2,
+        [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] h3,
+        [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] h4 {
+            color: var(--ink) !important;
+            margin: 0.85rem 0 0.35rem 0 !important;
+            line-height: 1.28 !important;
+        }
+
+        [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] h1:first-child,
+        [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] h2:first-child,
+        [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] h3:first-child,
+        [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] h4:first-child,
+        [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] p:first-child {
+            margin-top: 0 !important;
+        }
+
+        [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] p {
+            margin: 0.45rem 0 0.78rem 0;
+        }
+
+        [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] ul,
+        [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] ol {
+            margin: 0.35rem 0 0.9rem 0;
+            padding-left: 1.35rem;
+        }
+
+        [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] li {
+            margin: 0.28rem 0;
+            padding-left: 0.16rem;
+        }
+
+        [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] li::marker {
+            color: var(--accent) !important;
+            font-weight: 760;
+        }
+
+        [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] strong {
+            color: var(--ink) !important;
+            font-weight: 780;
+        }
+
+        [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] a[href^="#"] {
+            display: none !important;
+        }
+
+        [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] blockquote {
+            margin: 0.75rem 0;
+            padding: 0.65rem 0.8rem;
+            border-left: 3px solid var(--accent);
+            border-radius: 0 8px 8px 0;
+            background: var(--quote-bg);
+            color: var(--muted) !important;
+        }
+
+        [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] code {
+            background: var(--code-inline-bg) !important;
+            border: 1px solid var(--code-border) !important;
+            border-radius: 6px !important;
+            color: var(--code-ink) !important;
+            font-size: 0.86em !important;
+            font-weight: 650;
+            padding: 0.12rem 0.32rem !important;
+            white-space: break-spaces;
+        }
+
+        [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] pre {
+            position: relative;
+            overflow-x: auto;
+            margin: 0.85rem 0 1rem 0;
+            padding: 0.9rem 1rem !important;
+            border: 1px solid var(--code-border) !important;
+            border-left: 4px solid var(--accent) !important;
+            border-radius: 10px !important;
+            background: var(--code-bg) !important;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), var(--shadow-sm);
+        }
+
+        [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] pre code {
+            display: block;
+            width: max-content;
+            min-width: 100%;
+            background: transparent !important;
+            border: 0 !important;
+            border-radius: 0 !important;
+            color: var(--code-ink) !important;
+            font-size: 0.88rem !important;
+            font-weight: 600;
+            line-height: 1.55;
+            padding: 0 !important;
+            white-space: pre;
+        }
+
+        [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] pre code::selection,
+        [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] code::selection {
+            background: rgba(56, 189, 248, 0.32);
+            color: #ffffff;
+        }
+
+        [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] table {
+            width: 100%;
+            border-collapse: collapse;
+            overflow: hidden;
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            background: var(--panel);
+            margin: 0.75rem 0 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] th,
+        [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] td {
+            border-bottom: 1px solid var(--panel-border);
+            padding: 0.5rem 0.6rem;
+            text-align: left;
+        }
+
+        [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] th {
+            background: var(--panel-soft);
+            color: var(--ink) !important;
+            font-weight: 760;
         }
 
         .conversation-empty {
@@ -2979,7 +3143,8 @@ def render_ai_response(content: str) -> None:
     """Render AI output as structured product cards."""
     sections = parse_ai_sections(content)
     if len(sections) < 2:
-        st.markdown(content)
+        with st.container(border=True):
+            st.markdown(content)
         return
 
     for title, body in sections:
