@@ -165,6 +165,17 @@ def asset_data_uri(path: Path, mime_type: str) -> str:
     return f"data:{mime_type};base64,{encoded}"
 
 
+ASSISTANT_CHAT_AVATAR = asset_data_uri(BRAND_MARK, "image/png")
+
+
+def chat_avatar(role: str) -> str:
+    """Return the branded avatar for a chat role."""
+    normalized_role = str(role or "").lower()
+    if normalized_role in {"assistant", "ai"}:
+        return ASSISTANT_CHAT_AVATAR or ":material/auto_awesome:"
+    return ":material/person:"
+
+
 def active_theme_mode() -> str:
     """Return the selected display theme."""
     mode = st.session_state.get("theme_mode", "Dark")
@@ -1433,6 +1444,35 @@ def inject_css() -> None:
 
         [data-testid="stChatMessage"] [data-testid="stVerticalBlockBorderWrapper"] > div {
             background: transparent !important;
+        }
+
+        [data-testid="stChatMessageAvatarCustom"],
+        [data-testid="stChatMessageAvatarUser"],
+        [data-testid="stChatMessageAvatarAssistant"],
+        img[alt="assistant avatar"] {
+            width: 2.35rem !important;
+            height: 2.35rem !important;
+            border-radius: 10px !important;
+            border: 1px solid var(--panel-border) !important;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+        }
+
+        [data-testid="stChatMessageAvatarCustom"] {
+            background: linear-gradient(135deg, #312e81 0%, #7c3aed 100%) !important;
+            color: #f5f3ff !important;
+        }
+
+        [data-testid="stChatMessageAvatarCustom"] *,
+        [data-testid="stChatMessageAvatarCustom"] svg {
+            color: #f5f3ff !important;
+            fill: currentColor !important;
+            stroke: currentColor !important;
+        }
+
+        img[alt="assistant avatar"] {
+            background: linear-gradient(135deg, #082f49 0%, #0f172a 100%) !important;
+            object-fit: cover !important;
+            object-position: center !important;
         }
 
         [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] {
@@ -3431,10 +3471,10 @@ def submit_conversation_message(df: pd.DataFrame, question: str) -> bool:
 
     messages = st.session_state.setdefault("ai_messages", [])
     messages.append({"role": "user", "content": question})
-    with st.chat_message("user"):
+    with st.chat_message("user", avatar=chat_avatar("user")):
         st.markdown(question)
 
-    with st.chat_message("assistant"):
+    with st.chat_message("assistant", avatar=chat_avatar("assistant")):
         spinner_label = "Cleaning data and running analysis..." if should_execute_query(question) else "Thinking through the dataset..."
         with st.spinner(spinner_label):
             try:
@@ -3503,7 +3543,8 @@ def render_conversation_ai(df: pd.DataFrame) -> None:
         render_conversation_empty_state()
 
     for message in messages:
-        with st.chat_message(message["role"]):
+        role = str(message.get("role", "assistant"))
+        with st.chat_message(role, avatar=chat_avatar(role)):
             if message["role"] == "assistant":
                 render_ai_response(message["content"])
             else:
