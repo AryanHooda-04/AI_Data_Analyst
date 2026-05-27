@@ -187,6 +187,7 @@ def theme_css_variables() -> str:
             --panel-border: #26374f;
             --ink: #e7eef8;
             --muted: #9fb0c5;
+            --eyebrow: #d7e7fb;
             --sidebar-bg: #0b1220;
             --sidebar-panel: #111827;
             --sidebar-line: #26374f;
@@ -211,6 +212,7 @@ def theme_css_variables() -> str:
             --panel-border: #d9e4f2;
             --ink: #102033;
             --muted: #63748a;
+            --eyebrow: #425875;
             --sidebar-bg: #f8fbff;
             --sidebar-panel: #ffffff;
             --sidebar-line: #d7e4f1;
@@ -254,6 +256,41 @@ def theme_override_css() -> str:
 
         [data-testid="stHeader"] {
             background: rgba(11, 18, 32, 0.78) !important;
+        }
+
+        [data-testid="stBottom"],
+        [data-testid="stBottomBlockContainer"],
+        [data-testid="stChatFloatingInputContainer"] {
+            background: #0b1220 !important;
+            background-color: #0b1220 !important;
+            background-image: none !important;
+            border-top: 1px solid var(--panel-border) !important;
+            box-shadow: 0 -18px 44px rgba(0, 0, 0, 0.34) !important;
+        }
+
+        [data-testid="stBottom"]::before,
+        [data-testid="stBottom"]::after,
+        [data-testid="stBottomBlockContainer"]::before,
+        [data-testid="stBottomBlockContainer"]::after,
+        [data-testid="stChatFloatingInputContainer"]::before,
+        [data-testid="stChatFloatingInputContainer"]::after {
+            background: transparent !important;
+            background-image: none !important;
+        }
+
+        [data-testid="stBottom"] > div,
+        [data-testid="stBottomBlockContainer"] > div,
+        [data-testid="stChatFloatingInputContainer"] > div,
+        div:has(> [data-testid="stChatInput"]) {
+            background: transparent !important;
+            background-color: transparent !important;
+            background-image: none !important;
+        }
+
+        [data-testid="stBottom"] *,
+        [data-testid="stBottomBlockContainer"] *,
+        [data-testid="stChatFloatingInputContainer"] * {
+            color: var(--ink) !important;
         }
 
         [data-testid="stSidebar"] {
@@ -308,6 +345,12 @@ def theme_override_css() -> str:
             color: var(--ink) !important;
         }
 
+        .app-brandline .app-eyebrow {
+            color: #e7eef8 !important;
+            opacity: 1 !important;
+            text-shadow: 0 1px 12px rgba(15, 23, 42, 0.42);
+        }
+
         .app-subtitle,
         .sidebar-brand-subtitle,
         .sidebar-card-meta,
@@ -316,8 +359,10 @@ def theme_override_css() -> str:
         .conversation-empty-body,
         .empty-lead,
         [data-testid="stCaptionContainer"] *,
+        .stCaptionContainer,
+        .stCaptionContainer *,
         small {
-            color: var(--muted) !important;
+            color: #a9bdd5 !important;
         }
 
         [data-testid="stWidgetLabel"],
@@ -415,12 +460,44 @@ def theme_override_css() -> str:
 
         input,
         textarea,
+        [contenteditable="true"],
+        [data-testid="stChatInput"],
+        [data-testid="stChatInput"] *,
+        [data-testid="stChatInput"] textarea,
+        [data-testid="stChatInput"] input,
+        [data-testid="stChatInput"] [contenteditable="true"],
         [data-baseweb="select"] > div,
         [data-testid="stSelectbox"] div,
         [data-testid="stMultiSelect"] div {
             background-color: #0f172a !important;
             color: var(--ink) !important;
             border-color: var(--panel-border) !important;
+        }
+
+        [data-testid="stChatInput"] {
+            background: #0f172a !important;
+            background-color: #0f172a !important;
+            background-image: none !important;
+            border: 1px solid var(--panel-border) !important;
+            border-radius: 10px !important;
+            box-shadow: 0 14px 34px rgba(0, 0, 0, 0.34) !important;
+        }
+
+        [data-testid="stChatInput"] > div,
+        [data-testid="stChatInput"] form {
+            background: #0f172a !important;
+            background-color: #0f172a !important;
+            background-image: none !important;
+            border-color: var(--panel-border) !important;
+        }
+
+        [data-testid="stChatInput"] button,
+        [data-testid="stChatInput"] button *,
+        [data-testid="stChatInput"] svg {
+            background: #17233a !important;
+            color: var(--ink) !important;
+            fill: currentColor !important;
+            stroke: currentColor !important;
         }
 
         [data-testid="stDataFrame"],
@@ -816,7 +893,7 @@ def inject_css() -> None:
         }
 
         .app-eyebrow {
-            color: var(--muted) !important;
+            color: var(--eyebrow) !important;
             font-size: 0.72rem;
             font-weight: 720;
             text-transform: uppercase;
