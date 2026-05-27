@@ -171,6 +171,11 @@ def active_theme_mode() -> str:
     return mode if mode in THEME_OPTIONS else "Light"
 
 
+def toggle_theme_mode() -> None:
+    """Switch between light and dark display modes."""
+    st.session_state["theme_mode"] = "Light" if active_theme_mode() == "Dark" else "Dark"
+
+
 def theme_css_variables() -> str:
     """Return CSS custom properties for the active app theme."""
     if active_theme_mode() == "Dark":
@@ -229,13 +234,26 @@ def theme_override_css() -> str:
     if active_theme_mode() != "Dark":
         return ""
     return """
+        html,
+        body,
+        .stApp,
+        [data-testid="stApp"],
         [data-testid="stAppViewContainer"],
         [data-testid="stAppViewContainer"] > .main,
-        .stApp {
+        [data-testid="stMain"],
+        [data-testid="stMain"] > div,
+        section.main,
+        .main,
+        .main .block-container,
+        [data-testid="stMainBlockContainer"] {
             background:
                 radial-gradient(circle at 12% 0%, rgba(56, 189, 248, 0.13), transparent 32%),
                 linear-gradient(180deg, #0b1220 0%, #0f172a 100%) !important;
             color: var(--ink) !important;
+        }
+
+        [data-testid="stHeader"] {
+            background: rgba(11, 18, 32, 0.78) !important;
         }
 
         [data-testid="stSidebar"] {
@@ -256,7 +274,9 @@ def theme_override_css() -> str:
         .empty-workspace,
         .topbar-command-panel,
         .st-key-top_workspace_nav,
-        [data-testid="stVerticalBlockBorderWrapper"] {
+        [data-testid="stVerticalBlockBorderWrapper"],
+        [data-testid="stVerticalBlockBorderWrapper"] > div,
+        [data-testid="stVerticalBlockBorderWrapper"] [data-testid="stVerticalBlock"] {
             background: var(--panel) !important;
             border-color: var(--panel-border) !important;
         }
@@ -275,6 +295,7 @@ def theme_override_css() -> str:
         }
 
         .app-title,
+        .app-eyebrow,
         .sidebar-brand-title,
         .sidebar-card-value,
         .data-story-value,
@@ -323,6 +344,7 @@ def theme_override_css() -> str:
 
         .stButton > button,
         .stDownloadButton > button,
+        .st-key-theme_toggle_button button,
         [data-testid="stSidebar"] .stButton > button,
         [data-testid="stSidebar"] [data-testid="stFileUploader"] button,
         [data-testid="stSidebar"] .stDownloadButton button,
@@ -334,6 +356,7 @@ def theme_override_css() -> str:
 
         .stButton > button:hover,
         .stDownloadButton > button:hover,
+        .st-key-theme_toggle_button button:hover,
         [data-testid="stSidebar"] .stButton > button:hover,
         .st-key-top_workspace_nav .stButton > button:hover {
             background: #17233a !important;
@@ -342,6 +365,7 @@ def theme_override_css() -> str:
         }
 
         .stButton > button[kind="primary"],
+        .st-key-theme_toggle_button button[kind="primary"],
         [data-testid="stSidebar"] .stButton > button[kind="primary"],
         .st-key-top_workspace_nav .stButton > button[kind="primary"] {
             background: linear-gradient(90deg, #2563eb, #0891b2) !important;
@@ -364,6 +388,13 @@ def theme_override_css() -> str:
         [data-testid="stMetric"],
         [data-testid="stMetric"] div {
             color: var(--ink) !important;
+        }
+
+        label,
+        p,
+        span,
+        div {
+            color: inherit;
         }
     """
 
@@ -786,6 +817,30 @@ def inject_css() -> None:
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 0.38rem;
+        }
+
+        .topbar-action-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            gap: 0.45rem;
+            margin-top: 0.5rem;
+        }
+
+        .st-key-theme_toggle_button button {
+            min-height: 2.25rem;
+            justify-content: center;
+            border-radius: 7px !important;
+            border: 1px solid var(--panel-border) !important;
+            background: var(--panel) !important;
+            color: var(--ink) !important;
+            font-weight: 720;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .st-key-theme_toggle_button button:hover {
+            border-color: var(--accent) !important;
+            background: var(--accent-soft) !important;
+            transform: translateY(-1px);
         }
 
         .app-visual-card {
@@ -2010,15 +2065,6 @@ def render_sidebar() -> tuple[pd.DataFrame | None, pd.DataFrame | None, str, str
     tool_cols[0].button("Reset", icon=":material/restart_alt:", on_click=reset_workspace_state, width="stretch")
     tool_cols[1].button("Clear chat", icon=":material/delete_sweep:", on_click=clear_ai_chat, width="stretch")
 
-    st.sidebar.markdown('<div class="sidebar-section-title">Display</div>', unsafe_allow_html=True)
-    st.sidebar.radio(
-        "Theme",
-        THEME_OPTIONS,
-        key="theme_mode",
-        horizontal=True,
-        label_visibility="collapsed",
-    )
-
     st.sidebar.markdown('<div class="sidebar-section-title">AI status</div>', unsafe_allow_html=True)
     st.sidebar.selectbox("GPT model", MODEL_OPTIONS, key="model_choice")
     if st.session_state.get("model_choice") == "Custom":
@@ -2078,6 +2124,9 @@ def render_app_topbar(
     page_title, page_subtitle = PAGE_COPY.get(navigation, ("Analysis Workspace", "Explore the active dataset."))
     mark_uri = asset_data_uri(BRAND_MARK, "image/png")
     mark_html = f'<span class="brand-mark"><img src="{mark_uri}" alt="{APP_NAME} mark" /></span>' if mark_uri else ""
+    is_dark = active_theme_mode() == "Dark"
+    theme_label = "Light mode" if is_dark else "Dark mode"
+    theme_icon = ":material/light_mode:" if is_dark else ":material/dark_mode:"
     with st.container(border=True):
         left, right = st.columns([4.2, 1.8], vertical_alignment="center")
         with left:
@@ -2100,25 +2149,33 @@ def render_app_topbar(
                 unsafe_allow_html=True,
             )
         with right:
-            st.markdown(
-                f"""
-                <div class="topbar-command-panel">
-                    <div class="topbar-command-title">Control Center</div>
-                    <div class="topbar-command-grid">
-                        <span class="meta-pill">AI ready</span>
-                        <span class="meta-pill">Governed view</span>
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
+            action_cols = st.columns(2)
+            action_cols[0].button(
+                theme_label,
+                key="theme_toggle_button",
+                icon=theme_icon,
+                width="stretch",
+                on_click=toggle_theme_mode,
             )
-            st.download_button(
+            action_cols[1].download_button(
                 "Export CSV",
                 data=df.to_csv(index=False).encode("utf-8"),
                 file_name="insightanalytica_export.csv",
                 mime="text/csv",
                 icon=":material/download:",
                 width="stretch",
+            )
+            st.markdown(
+                f"""
+                <div class="topbar-command-panel">
+                    <div class="topbar-command-title">Control Center</div>
+                    <div class="topbar-command-grid">
+                        <span class="meta-pill">AI ready</span>
+                        <span class="meta-pill">{escape(active_theme_mode())} theme</span>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
             )
 
 
