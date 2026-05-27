@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import os
+import re
 from html import escape
 from pathlib import Path
 
@@ -1942,21 +1943,64 @@ def render_action_bar(title: str, actions: list[str], state_key: str, key_prefix
             st.session_state[state_key] = action
 
 
+def canonical_ai_section_title(line: str) -> str | None:
+    """Return a known AI response section title from a markdown-ish heading."""
+    raw = line.strip()
+    if not raw:
+        return None
+
+    heading_match = re.match(r"^#{1,6}\s+(?P<title>.+)$", raw)
+    title = heading_match.group("title") if heading_match else raw
+    title = re.sub(r"^\s*(?:[-*+]\s+|\d+[\.)]\s+)", "", title).strip()
+    title = title.strip("*_` ").rstrip(":").strip()
+    normalized = re.sub(r"\s+", " ", re.sub(r"^[^a-z0-9]+", "", title.lower()))
+
+    exact_titles = {section.lower(): section for section in AI_RESPONSE_SECTIONS}
+    aliases = {
+        "next steps": "Recommended Next Steps",
+        "recommendations": "Recommended Next Steps",
+        "recommended actions": "Recommended Next Steps",
+        "risks": "Caveats",
+        "limitations": "Caveats",
+        "evidence": "Evidence",
+        "summary": "Summary",
+    }
+    if normalized in exact_titles:
+        return exact_titles[normalized]
+    if normalized in aliases:
+        return aliases[normalized]
+
+    # Flexible matches are only treated as section breaks when the model used
+    # an explicit heading marker, preventing ordinary body lines such as
+    # "Summary statistics:" from being split into a new card.
+    if heading_match or raw.startswith("**"):
+        flexible_prefixes = [
+            ("recommended next steps", "Recommended Next Steps"),
+            ("next steps", "Recommended Next Steps"),
+            ("recommendations", "Recommended Next Steps"),
+            ("evidence", "Evidence"),
+            ("caveats", "Caveats"),
+            ("limitations", "Caveats"),
+            ("summary", "Summary"),
+        ]
+        for prefix, canonical in flexible_prefixes:
+            if normalized == prefix or normalized.startswith(f"{prefix} "):
+                return canonical
+    return None
+
+
 def parse_ai_sections(content: str) -> list[tuple[str, str]]:
     """Parse model responses into productized UI sections when possible."""
     sections: list[tuple[str, list[str]]] = []
     current_title: str | None = None
     current_body: list[str] = []
-    section_names = {name.lower(): name for name in AI_RESPONSE_SECTIONS}
 
     for raw_line in content.splitlines():
-        line = raw_line.strip()
-        normalized = line.strip("#*: ").lower()
-        normalized = normalized.removesuffix(":")
-        if normalized in section_names:
+        title = canonical_ai_section_title(raw_line)
+        if title:
             if current_title:
                 sections.append((current_title, current_body))
-            current_title = section_names[normalized]
+            current_title = title
             current_body = []
             continue
         if current_title:
@@ -1977,16 +2021,9 @@ def render_ai_response(content: str) -> None:
         return
 
     for title, body in sections:
-        safe_body = escape(body).replace("\n", "<br>")
-        st.markdown(
-            f"""
-            <div class="ai-response-card">
-                <div class="ai-response-card-title">{escape(title)}</div>
-                <div class="ai-response-card-body">{safe_body}</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        with st.container(border=True):
+            st.markdown(f'<div class="ai-response-card-title">{escape(title)}</div>', unsafe_allow_html=True)
+            st.markdown(body)
 
 
 def render_column_profiler(df: pd.DataFrame) -> None:
