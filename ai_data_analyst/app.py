@@ -167,8 +167,8 @@ def asset_data_uri(path: Path, mime_type: str) -> str:
 
 def active_theme_mode() -> str:
     """Return the selected display theme."""
-    mode = st.session_state.get("theme_mode", "Light")
-    return mode if mode in THEME_OPTIONS else "Light"
+    mode = st.session_state.get("theme_mode", "Dark")
+    return mode if mode in THEME_OPTIONS else "Dark"
 
 
 def toggle_theme_mode() -> None:
@@ -2161,7 +2161,7 @@ def initialize_state() -> None:
         "last_voice_audio": None,
         "last_transcript": "",
         "table_density": "Comfortable",
-        "theme_mode": "Light",
+        "theme_mode": "Dark",
         "show_term_glossary": True,
         "demo_ai_calls": 0,
         "demo_estimated_tokens": 0,
