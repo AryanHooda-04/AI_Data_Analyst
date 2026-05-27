@@ -7,6 +7,9 @@ sidebar_*.png
 uiux_*.png
 ux_*.png
 voice_*check*.png
+pipeline_*check*.png
+data/
+*.db
 __pycache__/
 *.py[cod]
 .streamlit/secrets.toml

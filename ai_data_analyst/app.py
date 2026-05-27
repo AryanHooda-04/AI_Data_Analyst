@@ -24,6 +24,9 @@ from anomaly_detector import detect_outliers_iqr, detect_outliers_zscore, outlie
 from ai_engine import ask_ai, openai_ssl_mode, text_to_speech, transcribe_audio
 from code_generator import generate_code
 from data_loader import load_file
+from pipeline_history import load_recent_runs
+from pipeline_orchestrator import reject_cleaning, run_analysis, start_pipeline
+from pipeline_state import ApprovalStatus, PipelineRun, PipelineStage
 from utils import categorical_columns, numeric_columns
 from visualization import (
     plot_aggregated_bar,
@@ -45,6 +48,7 @@ NAV_ITEMS = [
     {"label": "Ask AI", "icon": ":material/smart_toy:"},
     {"label": "Visualizations", "icon": ":material/monitoring:"},
     {"label": "Insights & Anomalies", "icon": ":material/troubleshoot:"},
+    {"label": "Agent Pipeline", "icon": ":material/account_tree:"},
     {"label": "Code Generator", "icon": ":material/code:"},
     {"label": "Presentation Mode", "icon": ":material/present_to_all:"},
 ]
@@ -704,6 +708,67 @@ def inject_css() -> None:
             line-height: 1.45;
         }
 
+        .agent-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 0.75rem;
+            margin: 0.75rem 0 1rem 0;
+        }
+
+        .agent-card {
+            background: #ffffff;
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            padding: 0.85rem 0.95rem;
+            min-height: 120px;
+        }
+
+        .agent-card-completed {
+            border-left: 4px solid #15803d;
+        }
+
+        .agent-card-pending {
+            border-left: 4px solid #94a3b8;
+        }
+
+        .agent-card-failed {
+            border-left: 4px solid #dc2626;
+        }
+
+        .agent-card-title {
+            color: var(--ink) !important;
+            font-weight: 760;
+            margin-bottom: 0.25rem;
+        }
+
+        .agent-card-meta {
+            color: var(--muted) !important;
+            font-size: 0.78rem;
+            margin-bottom: 0.45rem;
+        }
+
+        .agent-card-body {
+            color: #334155 !important;
+            font-size: 0.88rem;
+            line-height: 1.45;
+        }
+
+        .approval-panel {
+            background: #fff7ed;
+            border: 1px solid #fed7aa;
+            border-radius: 8px;
+            padding: 0.95rem 1rem;
+            margin: 0.75rem 0 1rem 0;
+        }
+
+        .history-row {
+            background: #ffffff;
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            padding: 0.75rem 0.85rem;
+            margin-bottom: 0.55rem;
+        }
+
         .muted {
             color: var(--muted) !important;
         }
@@ -739,6 +804,7 @@ def inject_css() -> None:
 
         @media (max-width: 900px) {
             .empty-grid,
+            .agent-grid,
             .glossary-grid {
                 grid-template-columns: 1fr;
             }
@@ -782,6 +848,7 @@ def initialize_state() -> None:
         "demo_ai_calls": 0,
         "demo_estimated_tokens": 0,
         "demo_last_usage": "",
+        "pipeline_run": None,
     }
     for key, value in defaults.items():
         st.session_state.setdefault(key, value)
@@ -796,6 +863,7 @@ def reset_chat_if_dataset_changed(df: pd.DataFrame) -> None:
         st.session_state["generated_code"] = ""
         st.session_state["ask_text"] = ""
         st.session_state["code_request"] = ""
+        st.session_state["pipeline_run"] = None
 
 
 def health_label(score: int | float) -> str:
@@ -971,6 +1039,52 @@ def render_demo_guard_status() -> None:
     )
 
 
+def pipeline_stage_label(stage: PipelineStage | str) -> str:
+    """Return a readable pipeline stage label."""
+    value = stage.value if isinstance(stage, PipelineStage) else str(stage)
+    return value.replace("_", " ").title()
+
+
+def pipeline_result_status(run: PipelineRun | None, agent_name: str) -> str:
+    """Return one agent's status for compact display."""
+    if run is None:
+        return "pending"
+    result = run.agent_results.get(agent_name)
+    return result.status if result else "pending"
+
+
+def render_pipeline_sidebar_status() -> None:
+    """Render current agent workflow progress in the sidebar."""
+    run = st.session_state.get("pipeline_run")
+    if not isinstance(run, PipelineRun):
+        return
+
+    agents = [
+        "DataCleaningAgent",
+        "VerificationAgent",
+        "TrendAgent",
+        "AnomalyAgent",
+        "CorrelationAgent",
+        "InsightsAgent",
+        "VisualizationAgent",
+        "ReportSynthesisAgent",
+    ]
+    completed = sum(1 for agent in agents if pipeline_result_status(run, agent) == "completed")
+    st.sidebar.markdown('<div class="sidebar-section-title">Agent pipeline</div>', unsafe_allow_html=True)
+    st.sidebar.markdown(
+        f"""
+        <div class="sidebar-card">
+            <div class="sidebar-card-title">Current run</div>
+            <div class="sidebar-card-value">{escape(run.dataset_name)}</div>
+            <div class="sidebar-card-meta">Run ID: {escape(run.run_id)}</div>
+            <div class="sidebar-card-meta">Stage: {escape(pipeline_stage_label(run.current_stage))}</div>
+            <div class="sidebar-card-meta">{completed}/{len(agents)} agents completed</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def set_navigation(label: str) -> None:
     """Set the active app destination before rerendering navigation buttons."""
     st.session_state["navigation"] = label
@@ -997,6 +1111,7 @@ def reset_workspace_state() -> None:
         "last_voice_audio": None,
         "last_transcript": "",
         "table_density": "Comfortable",
+        "pipeline_run": None,
     }.items():
         st.session_state[key] = value
 
@@ -1330,6 +1445,7 @@ def render_sidebar() -> tuple[pd.DataFrame | None, pd.DataFrame | None, str, str
         unsafe_allow_html=True,
     )
     render_demo_guard_status()
+    render_pipeline_sidebar_status()
 
     return raw_df, filtered_df, navigation, source_name, load_error, active_filters
 
@@ -2067,6 +2183,267 @@ def render_presentation_mode(df: pd.DataFrame) -> None:
         st.plotly_chart(plot_box(df, metric, category), width="stretch", key="presentation_box")
 
 
+def agent_display_name(agent_name: str) -> str:
+    """Return a friendlier agent name."""
+    return agent_name.replace("Agent", " Agent").replace("DataCleaning", "Data Cleaning")
+
+
+def render_agent_cards(run: PipelineRun) -> None:
+    """Render all known agent statuses as compact cards."""
+    agents = [
+        "DataCleaningAgent",
+        "VerificationAgent",
+        "TrendAgent",
+        "AnomalyAgent",
+        "CorrelationAgent",
+        "InsightsAgent",
+        "VisualizationAgent",
+        "ReportSynthesisAgent",
+    ]
+    cards = []
+    for agent_name in agents:
+        result = run.agent_results.get(agent_name)
+        status = result.status if result else "pending"
+        css_status = "agent-card-completed" if status == "completed" else "agent-card-failed" if status == "failed" else "agent-card-pending"
+        summary = result.summary if result else "Waiting for this stage."
+        duration = f"{result.duration_seconds}s" if result else "-"
+        cards.append(
+            f"""
+            <div class="agent-card {css_status}">
+                <div class="agent-card-title">{escape(agent_display_name(agent_name))}</div>
+                <div class="agent-card-meta">{escape(status.title())} · {escape(duration)}</div>
+                <div class="agent-card-body">{escape(summary)}</div>
+            </div>
+            """
+        )
+    st.markdown(f'<div class="agent-grid">{"".join(cards)}</div>', unsafe_allow_html=True)
+
+
+def render_cleaning_actions(run: PipelineRun) -> None:
+    """Render the cleaning audit table."""
+    if not run.cleaning_actions:
+        st.info("The cleaning agent did not need to modify the dataset.")
+        return
+    st.dataframe(
+        pd.DataFrame([action.__dict__ for action in run.cleaning_actions]),
+        width="stretch",
+        row_height=table_row_height(),
+    )
+
+
+def render_pipeline_chart(df: pd.DataFrame, spec: dict[str, object], idx: int) -> None:
+    """Render a chart recommendation from the visualization agent."""
+    chart_type = str(spec.get("type", ""))
+    title = str(spec.get("title", f"Pipeline chart {idx + 1}"))
+    try:
+        if chart_type == "line":
+            fig = plot_line(df, str(spec["x"]), str(spec["y"]))
+        elif chart_type == "bar":
+            fig = plot_aggregated_bar(
+                df,
+                str(spec["x"]),
+                str(spec["y"]),
+                str(spec.get("aggregation", "sum")),
+            )
+        elif chart_type == "box":
+            group_by = spec.get("x")
+            fig = plot_box(df, str(spec["y"]), str(group_by) if group_by else None)
+        elif chart_type == "heatmap":
+            fig = plot_heatmap(df)
+        elif chart_type == "histogram":
+            fig = plot_histogram(df, str(spec["x"]))
+        else:
+            st.info(f"Unsupported chart recommendation: {chart_type}")
+            return
+        fig.update_layout(title=title)
+        st.plotly_chart(fig, width="stretch", key=f"pipeline_chart_{idx}_{chart_type}")
+    except Exception as exc:  # noqa: BLE001
+        st.warning(f"Could not render {title}: {exc}")
+
+
+def render_pipeline_history() -> None:
+    """Render persisted pipeline history."""
+    runs = load_recent_runs(limit=8)
+    if not runs:
+        st.caption("No completed pipeline runs have been saved yet.")
+        return
+    for item in runs:
+        st.markdown(
+            f"""
+            <div class="history-row">
+                <div class="agent-card-title">{escape(item["dataset_name"])}</div>
+                <div class="agent-card-meta">Run {escape(item["run_id"])} · {escape(item["created_at"])} · {item["rows"]:,} rows x {item["columns"]:,} columns</div>
+                <div class="agent-card-body">{escape(item.get("summary") or "No summary saved.")}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+
+def render_agent_pipeline(df: pd.DataFrame, source_name: str | None) -> None:
+    """Render the InsightFlow-style agentic pipeline."""
+    st.subheader("Agent Pipeline")
+    st.markdown(
+        '<div class="section-kicker">Run an audited, approval-gated workflow: cleaning, verification, parallel analysis agents, visualization recommendations, and executive report synthesis.</div>',
+        unsafe_allow_html=True,
+    )
+
+    run = st.session_state.get("pipeline_run")
+    dataset_name = source_name or "Filtered dataset"
+
+    control_cols = st.columns([1.2, 1, 1])
+    if control_cols[0].button("Start pipeline", icon=":material/play_arrow:", type="primary", width="stretch"):
+        with st.spinner("Running cleaning and verification agents..."):
+            st.session_state["pipeline_run"] = start_pipeline(df, dataset_name)
+        st.rerun()
+    if control_cols[1].button("Reset pipeline", icon=":material/restart_alt:", width="stretch"):
+        st.session_state["pipeline_run"] = None
+        st.rerun()
+    if control_cols[2].download_button(
+        "Download source view",
+        data=df.to_csv(index=False).encode("utf-8"),
+        file_name="pipeline_source_view.csv",
+        mime="text/csv",
+        width="stretch",
+    ):
+        pass
+
+    if not isinstance(run, PipelineRun):
+        st.markdown(
+            """
+            <div class="presentation-band">
+                <div class="presentation-heading">InsightFlow-style workflow</div>
+                <div class="muted">Start the pipeline to generate a cleaned-data proposal, verification report, agent findings, chart recommendations, and a downloadable executive report.</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        with st.expander("Previous pipeline runs", expanded=False):
+            render_pipeline_history()
+        return
+
+    render_agent_cards(run)
+
+    stage_cols = st.columns(4)
+    stage_cols[0].metric("Stage", pipeline_stage_label(run.current_stage))
+    stage_cols[1].metric("Raw rows", f"{run.raw_shape[0]:,}")
+    stage_cols[2].metric("Cleaned rows", f"{run.cleaned_shape[0]:,}" if run.cleaned_shape else "-")
+    stage_cols[3].metric("Approval", run.approval_status.value.replace("_", " ").title())
+
+    st.subheader("Cleaning Proposal")
+    render_cleaning_actions(run)
+
+    if run.cleaned_df is not None:
+        preview_tabs = st.tabs(["Cleaned Preview", "Before/After Quality"])
+        with preview_tabs[0]:
+            st.dataframe(run.cleaned_df.head(50), width="stretch", row_height=table_row_height())
+            st.download_button(
+                "Download cleaned proposal",
+                data=run.cleaned_df.to_csv(index=False).encode("utf-8"),
+                file_name="cleaned_pipeline_dataset.csv",
+                mime="text/csv",
+            )
+        with preview_tabs[1]:
+            raw_health = dataset_health(run.raw_df)
+            clean_health = dataset_health(run.cleaned_df)
+            comparison = pd.DataFrame(
+                [
+                    {"metric": "Health score", "raw": raw_health["score"], "cleaned": clean_health["score"]},
+                    {"metric": "Missing cells", "raw": raw_health["missing_cells"], "cleaned": clean_health["missing_cells"]},
+                    {"metric": "Duplicate rows", "raw": raw_health["duplicate_rows"], "cleaned": clean_health["duplicate_rows"]},
+                    {"metric": "Rows", "raw": len(run.raw_df), "cleaned": len(run.cleaned_df)},
+                ]
+            )
+            st.dataframe(comparison, width="stretch", row_height=table_row_height())
+
+    verification = run.agent_results.get("VerificationAgent")
+    if verification:
+        st.subheader("Verification")
+        severity = verification.metrics.get("severity", "low")
+        st.markdown(f'<span class="status-pill">Severity: {escape(str(severity).title())}</span>', unsafe_allow_html=True)
+        for finding in verification.findings:
+            st.write(f"- {finding}")
+
+    if run.current_stage == PipelineStage.CLEANING_APPROVAL:
+        st.markdown(
+            """
+            <div class="approval-panel">
+                <div class="presentation-heading">Human approval required</div>
+                <div class="muted">Review the cleaning proposal before analysis agents use it. This keeps the workflow auditable and explainable.</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        approve_cols = st.columns(3)
+        if approve_cols[0].button("Approve cleaned data", icon=":material/check_circle:", type="primary", width="stretch"):
+            with st.spinner("Running analysis agents in parallel..."):
+                st.session_state["pipeline_run"] = run_analysis(run, use_cleaned_data=True)
+            st.rerun()
+        if approve_cols[1].button("Analyze raw data", icon=":material/database:", width="stretch"):
+            with st.spinner("Running analysis agents on raw data..."):
+                st.session_state["pipeline_run"] = run_analysis(run, use_cleaned_data=False)
+            st.rerun()
+        if approve_cols[2].button("Reject proposal", icon=":material/block:", width="stretch"):
+            st.session_state["pipeline_run"] = reject_cleaning(run)
+            st.warning("Cleaning proposal marked as rejected. Start a new pipeline run to retry.")
+            st.rerun()
+
+    if run.current_stage != PipelineStage.COMPLETED:
+        with st.expander("Previous pipeline runs", expanded=False):
+            render_pipeline_history()
+        return
+
+    st.subheader("Final Agent Report")
+    report_tabs = st.tabs(["Executive Report", "Trends", "Anomalies", "Correlations", "Charts", "History"])
+
+    with report_tabs[0]:
+        st.markdown(run.report_markdown)
+        st.download_button(
+            "Download executive report",
+            data=run.report_markdown.encode("utf-8"),
+            file_name=f"agentic_report_{run.run_id}.md",
+            mime="text/markdown",
+            type="primary",
+        )
+
+    with report_tabs[1]:
+        trend = run.agent_results.get("TrendAgent")
+        trends = trend.artifacts.get("trends", []) if trend else []
+        if trends:
+            st.dataframe(pd.DataFrame(trends), width="stretch", row_height=table_row_height())
+        elif trend:
+            st.info(trend.summary)
+
+    with report_tabs[2]:
+        anomaly = run.agent_results.get("AnomalyAgent")
+        if anomaly:
+            summary = anomaly.artifacts.get("summary", [])
+            if summary:
+                st.dataframe(pd.DataFrame(summary), width="stretch", row_height=table_row_height())
+            sample_rows = anomaly.artifacts.get("sample_rows", [])
+            if sample_rows:
+                with st.expander("Sample anomaly rows", expanded=False):
+                    st.dataframe(pd.DataFrame(sample_rows), width="stretch", row_height=table_row_height())
+
+    with report_tabs[3]:
+        corr = run.agent_results.get("CorrelationAgent")
+        pairs = corr.artifacts.get("top_pairs", []) if corr else []
+        if pairs:
+            st.dataframe(pd.DataFrame(pairs), width="stretch", row_height=table_row_height())
+        elif corr:
+            st.info(corr.summary)
+
+    with report_tabs[4]:
+        if run.chart_specs:
+            for idx, spec in enumerate(run.chart_specs):
+                render_pipeline_chart(run.active_df, spec, idx)
+        else:
+            st.info("The visualization agent did not recommend charts for this dataset.")
+
+    with report_tabs[5]:
+        render_pipeline_history()
+
+
 def render_code_generator(df: pd.DataFrame) -> None:
     """Render SQL and Pandas generator."""
     st.subheader("Code Generator")
@@ -2182,6 +2559,8 @@ def main() -> None:
         render_visualizations(filtered_df)
     elif navigation == "Insights & Anomalies":
         render_insights(filtered_df)
+    elif navigation == "Agent Pipeline":
+        render_agent_pipeline(filtered_df, source_name)
     elif navigation == "Presentation Mode":
         render_presentation_mode(filtered_df)
     else:

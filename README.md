@@ -20,6 +20,7 @@ https://aidataanalyst-bfnglhzlgw6xyycnwarzrc.streamlit.app/
 - Generate Plotly charts with chart recommendations.
 - Detect anomalies with IQR and Z-score methods.
 - Generate SQL and Pandas code from natural-language requests.
+- Run an InsightFlow-style agentic pipeline with cleaning, verification, parallel analysis agents, and report synthesis.
 - Use global filters and presentation mode for clean demos.
 - Run with OpenAI SDK support for GPT-5 class models through the Responses API.
 
@@ -44,6 +45,10 @@ ai_data_analyst/
   ai_engine.py
   visualization.py
   anomaly_detector.py
+  pipeline_state.py
+  pipeline_agents.py
+  pipeline_orchestrator.py
+  pipeline_history.py
   code_generator.py
   utils.py
   requirements.txt
@@ -62,16 +67,20 @@ flowchart TD
     DF --> Analyzer["Analyzer<br/>stats, quality, profiles"]
     DF --> Viz["Visualization<br/>Plotly charts"]
     DF --> Anomaly["Anomaly Detector<br/>IQR / Z-score"]
+    DF --> Pipeline["Agent Pipeline<br/>clean, verify, analyze, report"]
     DF --> Context["Prompt Context Builder<br/>utils.py"]
     Context --> AI["AI Engine<br/>OpenAI SDK"]
     AI --> Ask["Ask AI responses"]
     AI --> Code["SQL + Pandas generation"]
     AI --> Voice["Transcription + TTS"]
+    Pipeline --> History["SQLite History<br/>pipeline_history.py"]
+    Pipeline --> Report["Executive Report<br/>Markdown export"]
     Ask --> UI
     Code --> UI
     Viz --> UI
     Analyzer --> UI
     Anomaly --> UI
+    Report --> UI
     Voice --> UI
 ```
 
@@ -84,14 +93,18 @@ The application follows a modular, single-process Streamlit architecture. Upload
 3. `app.py` stores the working dataset in Streamlit session state.
 4. Global filters create a filtered DataFrame used across all pages.
 5. `analyzer.py`, `visualization.py`, and `anomaly_detector.py` generate deterministic analytics locally.
-6. `utils.py` creates compact schema, sample, and summary context for AI prompts.
-7. `ai_engine.py` calls OpenAI for natural-language answers, transcription, and voice output.
-8. `code_generator.py` returns SQL, Pandas code, and an explanation for analyst requests.
+6. `pipeline_orchestrator.py` can run the approval-gated agent workflow over the active dataset view.
+7. `pipeline_agents.py` performs cleaning, verification, trends, anomalies, correlations, insights, chart recommendations, and report synthesis.
+8. `pipeline_history.py` persists completed agent runs in SQLite for demo history.
+9. `utils.py` creates compact schema, sample, and summary context for AI prompts.
+10. `ai_engine.py` calls OpenAI for natural-language answers, transcription, and voice output.
+11. `code_generator.py` returns SQL, Pandas code, and an explanation for analyst requests.
 
 ### Design Principles
 
 - Keep data loading, analysis, visualization, AI access, and code generation separate.
 - Prefer deterministic local analytics before calling AI.
+- Keep the agent pipeline auditable with visible cleaning actions and approval gates.
 - Send compact dataset context to OpenAI instead of entire files.
 - Keep API keys and generated artifacts out of Git.
 - Make the UI demo-ready while preserving a clean Python module structure.
@@ -240,6 +253,15 @@ git push origin main
 - IQR and Z-score anomaly detection.
 - Highlighted anomalous rows.
 - Plain-language glossary for statistical terms.
+
+### Agent Pipeline
+
+- Data Cleaning Agent proposes conservative cleaning actions.
+- Verification Agent checks integrity before analysis.
+- Human approval gate lets users approve cleaned data, analyze raw data, or reject the proposal.
+- Trend, Anomaly, Correlation, Insights, and Visualization agents run as a parallel analysis fan-out.
+- Report Synthesis Agent creates a downloadable Markdown executive report.
+- Completed runs are saved to local SQLite history for previous-analysis review.
 
 ### Code Generator
 

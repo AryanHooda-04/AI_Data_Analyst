@@ -6,6 +6,7 @@
 .venv/
 venv/
 env/
+.codex_reference_insightflow/
 
 # Local Streamlit/browser verification artifacts
 ai_data_analyst/browser_check*.png
@@ -15,3 +16,6 @@ ai_data_analyst/sidebar_*.png
 ai_data_analyst/uiux_*.png
 ai_data_analyst/ux_*.png
 ai_data_analyst/voice_*check*.png
+ai_data_analyst/pipeline_*check*.png
+ai_data_analyst/data/
+*.db

@@ -31,6 +31,10 @@ DEMO_SESSION_TOKEN_BUDGET=8000
 - `ai_engine.py` - OpenAI client setup, GPT-5 compatible completion calls, transcription, and text-to-speech.
 - `visualization.py` - Plotly chart builders.
 - `anomaly_detector.py` - IQR and Z-score outlier detection.
+- `pipeline_state.py` - Dataclasses and enums for the agentic pipeline state.
+- `pipeline_agents.py` - Cleaning, verification, trend, anomaly, correlation, insight, visualization, and report agents.
+- `pipeline_orchestrator.py` - Approval-gated workflow orchestration and parallel analysis fan-out.
+- `pipeline_history.py` - SQLite persistence for completed pipeline runs.
 - `code_generator.py` - AI-generated SQL and Pandas code.
 - `utils.py` - Prompt context formatting and dataframe helpers.
 - `voice_recorder/index.html` - Browser microphone recorder component used by Streamlit.
@@ -46,6 +50,9 @@ flowchart LR
     D --> E["Overview<br/>analyzer.py"]
     D --> F["Charts<br/>visualization.py"]
     D --> G["Anomalies<br/>anomaly_detector.py"]
+    D --> N["Agent Pipeline<br/>pipeline_orchestrator.py"]
+    N --> O["Specialized Agents<br/>pipeline_agents.py"]
+    O --> P["SQLite History<br/>pipeline_history.py"]
     D --> H["Prompt Context<br/>utils.py"]
     H --> I["OpenAI Client<br/>ai_engine.py"]
     I --> J["Ask AI"]
@@ -54,6 +61,7 @@ flowchart LR
     E --> M["Streamlit UI"]
     F --> M
     G --> M
+    O --> M
     J --> M
     K --> M
     L --> M
@@ -65,6 +73,9 @@ flowchart LR
 - Data layer: `data_loader.py` converts uploaded files into DataFrames.
 - Analytics layer: `analyzer.py` and `anomaly_detector.py` produce local statistics, quality checks, insights, and outliers.
 - Visualization layer: `visualization.py` returns Plotly figures with consistent styling.
+- Agent pipeline layer: `pipeline_orchestrator.py` coordinates cleaning, verification, approval, parallel analysis, and report synthesis.
+- Agent layer: `pipeline_agents.py` contains the specialized agents that produce auditable outputs.
+- Persistence layer: `pipeline_history.py` saves completed run summaries to local SQLite.
 - AI layer: `ai_engine.py` manages OpenAI clients, SSL mode, Responses API calls, transcription, and text-to-speech.
 - Prompt layer: `utils.py` limits context size and formats schema, samples, and summary statistics.
 - Code layer: `code_generator.py` turns a natural-language request into SQL, Pandas code, and explanation.
@@ -72,6 +83,15 @@ flowchart LR
 ### Data And AI Boundary
 
 The app does not blindly send the entire dataset to OpenAI. It builds a compact prompt context containing schema, data types, a limited sample, and summary statistics. This keeps requests smaller, easier to reason about, and safer for demos.
+
+## Agent Pipeline Flow
+
+1. Data Cleaning Agent proposes duplicate removal, safe type conversion, missing-value imputation, and outlier review flags.
+2. Verification Agent compares raw vs cleaned quality, row retention, schema integrity, and severity.
+3. The user approves cleaned data, chooses raw data for analysis, or rejects the proposal.
+4. Trend, Anomaly, Correlation, Insights, and Visualization agents run as a parallel analysis fan-out.
+5. Report Synthesis Agent merges the agent outputs into a Markdown executive report.
+6. Pipeline history is saved to `data/pipeline_history.db`, which is intentionally ignored by Git.
 
 ## OpenAI Model Support
 
