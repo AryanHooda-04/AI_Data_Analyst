@@ -231,7 +231,58 @@ def inject_css() -> None:
         }
 
         [data-testid="stToolbar"] {
-            display: none;
+            visibility: visible !important;
+            pointer-events: auto !important;
+        }
+
+        [data-testid="stSidebarCollapseButton"] {
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+
+        [data-testid="collapsedControl"],
+        [data-testid="stSidebarCollapsedControl"],
+        [data-testid="stExpandSidebarButton"] {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            position: fixed !important;
+            top: 0.9rem !important;
+            left: 0.9rem !important;
+            z-index: 999999 !important;
+            align-items: center;
+            gap: 0.45rem;
+            min-height: 2.45rem;
+            padding: 0.2rem 0.75rem !important;
+            border-radius: 999px;
+            background: linear-gradient(90deg, var(--accent), var(--accent-2)) !important;
+            border: 1px solid rgba(255, 255, 255, 0.6) !important;
+            box-shadow: 0 12px 26px rgba(16, 32, 51, 0.22);
+        }
+
+        [data-testid="collapsedControl"]::after,
+        [data-testid="stSidebarCollapsedControl"]::after,
+        [data-testid="stExpandSidebarButton"]::after {
+            content: "Show sidebar";
+            color: #ffffff;
+            font-size: 0.82rem;
+            font-weight: 720;
+            white-space: nowrap;
+        }
+
+        [data-testid="collapsedControl"] *,
+        [data-testid="collapsedControl"] svg,
+        [data-testid="stSidebarCollapsedControl"] *,
+        [data-testid="stSidebarCollapsedControl"] svg,
+        [data-testid="stExpandSidebarButton"] *,
+        [data-testid="stExpandSidebarButton"] svg,
+        [data-testid="stSidebarCollapseButton"] *,
+        [data-testid="stSidebarCollapseButton"] svg {
+            color: #ffffff !important;
+            fill: currentColor !important;
+            stroke: currentColor !important;
         }
 
         .stApp,
