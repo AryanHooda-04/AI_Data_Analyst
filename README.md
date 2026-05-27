@@ -1,6 +1,6 @@
-# AI Data Analyst
+# InsightAnalytica
 
-AI Data Analyst is a production-ready Streamlit analytics workspace that combines data profiling, interactive visualizations, natural-language analysis, anomaly detection, voice input/output, and AI-assisted SQL/Pandas code generation.
+InsightAnalytica is a production-ready Streamlit analytics workspace that combines data profiling, interactive visualizations, cleaned-data natural-language analysis, anomaly detection, voice input/output, and AI-assisted SQL/Pandas code generation.
 
 The app is designed as a demo-ready mini analytics platform: upload a CSV or Excel file, inspect the dataset, have a conversation with a dataset-aware AI analyst, generate charts, detect outliers, and produce executable analysis code.
 
@@ -16,6 +16,7 @@ https://aidataanalyst-bfnglhzlgw6xyycnwarzrc.streamlit.app/
 - Use the bundled sample dataset for instant demos.
 - Explore dataset shape, schema, data quality, missing values, summary statistics, correlations, and column profiles.
 - Use Conversation AI with persistent chat history, suggested prompts, selectable OpenAI model, and configurable reasoning effort.
+- Ask numerical questions and receive computed result tables after the app cleans a safe query workspace.
 - Use voice input and AI voice output for analyst-style conversations.
 - Generate Plotly charts with chart recommendations.
 - Detect anomalies with IQR and Z-score methods.
@@ -49,6 +50,7 @@ ai_data_analyst/
   pipeline_agents.py
   pipeline_orchestrator.py
   pipeline_history.py
+  query_engine.py
   code_generator.py
   utils.py
   requirements.txt
@@ -69,8 +71,11 @@ flowchart TD
     DF --> Anomaly["Anomaly Detector<br/>IQR / Z-score"]
     DF --> Pipeline["Agent Pipeline<br/>clean, verify, analyze, report"]
     DF --> Context["Prompt Context Builder<br/>utils.py"]
+    DF --> Query["Cleaned Query Engine<br/>query_engine.py"]
     Context --> AI["AI Engine<br/>OpenAI SDK"]
     AI --> Chat["Conversation AI responses"]
+    AI --> Query
+    Query --> Results["Computed query result tables"]
     AI --> Code["SQL + Pandas generation"]
     AI --> Voice["Transcription + TTS"]
     Pipeline --> History["SQLite History<br/>pipeline_history.py"]
@@ -81,6 +86,7 @@ flowchart TD
     Analyzer --> UI
     Anomaly --> UI
     Report --> UI
+    Results --> UI
     Voice --> UI
 ```
 
@@ -97,8 +103,9 @@ The application follows a modular, single-process Streamlit architecture. Upload
 7. `pipeline_agents.py` performs cleaning, verification, trends, anomalies, correlations, insights, chart recommendations, and report synthesis.
 8. `pipeline_history.py` persists completed agent runs in SQLite for demo history.
 9. `utils.py` creates compact schema, sample, and summary context for AI prompts.
-10. `ai_engine.py` calls OpenAI for natural-language answers, transcription, and voice output.
-11. `code_generator.py` returns SQL, Pandas code, and an explanation for analyst requests.
+10. `query_engine.py` cleans a working copy, generates or infers safe read-only SQL, executes it in SQLite, and returns numerical result tables.
+11. `ai_engine.py` calls OpenAI for natural-language answers, query generation, transcription, and voice output.
+12. `code_generator.py` returns SQL, Pandas code, and an explanation for analyst requests.
 
 ### Design Principles
 

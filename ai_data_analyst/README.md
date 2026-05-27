@@ -1,6 +1,6 @@
-# AI Data Analyst App
+# InsightAnalytica App
 
-This folder contains the Streamlit application source code for AI Data Analyst.
+This folder contains the Streamlit application source code for InsightAnalytica.
 
 ## Run Locally
 
@@ -29,6 +29,7 @@ DEMO_SESSION_TOKEN_BUDGET=80000
 - `data_loader.py` - CSV and Excel upload handling.
 - `analyzer.py` - Summary statistics, missing values, column profiling, data health, and deterministic insights.
 - `ai_engine.py` - OpenAI client setup, GPT-5 compatible completion calls, transcription, and text-to-speech.
+- `query_engine.py` - Cleaned-data query workspace for computed natural-language result tables.
 - `visualization.py` - Plotly chart builders.
 - `anomaly_detector.py` - IQR and Z-score outlier detection.
 - `pipeline_state.py` - Dataclasses and enums for the agentic pipeline state.
@@ -54,8 +55,11 @@ flowchart LR
     N --> O["Specialized Agents<br/>pipeline_agents.py"]
     O --> P["SQLite History<br/>pipeline_history.py"]
     D --> H["Prompt Context<br/>utils.py"]
+    D --> Q["Cleaned Query Engine<br/>query_engine.py"]
     H --> I["OpenAI Client<br/>ai_engine.py"]
     I --> J["Conversation AI"]
+    I --> Q
+    Q --> R["Computed Result Tables"]
     I --> K["Voice Input / Output"]
     H --> L["Code Generator<br/>code_generator.py"]
     E --> M["Streamlit UI"]
@@ -63,6 +67,7 @@ flowchart LR
     G --> M
     O --> M
     J --> M
+    R --> M
     K --> M
     L --> M
 ```
@@ -77,12 +82,15 @@ flowchart LR
 - Agent layer: `pipeline_agents.py` contains the specialized agents that produce auditable outputs.
 - Persistence layer: `pipeline_history.py` saves completed run summaries to local SQLite.
 - AI layer: `ai_engine.py` manages OpenAI clients, SSL mode, Responses API calls, transcription, and text-to-speech.
+- Query layer: `query_engine.py` cleans a working copy, validates read-only SQL, executes it in SQLite, and returns computed tables to Conversation AI.
 - Prompt layer: `utils.py` limits context size and formats schema, samples, and summary statistics.
 - Code layer: `code_generator.py` turns a natural-language request into SQL, Pandas code, and explanation.
 
 ### Data And AI Boundary
 
 The app does not blindly send the entire dataset to OpenAI. It builds a compact prompt context containing schema, data types, a limited sample, and summary statistics. This keeps requests smaller, easier to reason about, and safer for demos.
+
+For numerical chat requests, Conversation AI now runs against a cleaned local query workspace. Common aggregations are inferred deterministically, while complex requests can use the selected GPT model to generate a validated read-only SQLite query. The user sees the computed table, not just SQL code.
 
 ## Agent Pipeline Flow
 
@@ -140,7 +148,7 @@ git push origin main
 Before pushing application code, run:
 
 ```powershell
-python -m py_compile app.py data_loader.py analyzer.py ai_engine.py visualization.py anomaly_detector.py code_generator.py utils.py
+python -m py_compile app.py data_loader.py analyzer.py ai_engine.py query_engine.py visualization.py anomaly_detector.py code_generator.py utils.py
 ```
 
 The repo ignores `.env`, `.streamlit/secrets.toml`, logs, generated screenshots, Python caches, and virtual environments.
@@ -149,7 +157,7 @@ The repo ignores `.env`, `.streamlit/secrets.toml`, logs, generated screenshots,
 
 1. Load `sample_data.csv` from the sidebar.
 2. Review the Overview readiness checks and correlations.
-3. Conversation AI: `What are the most important trends in this dataset?`
+3. Conversation AI: `List maximum impressions per channel.`
 4. Open Visualizations and chart revenue by region or over time.
 5. Review Insights & Anomalies with IQR detection.
 6. Generate SQL and Pandas code for a business question.

@@ -1,4 +1,4 @@
-"""Streamlit entry point for the AI Data Analyst application."""
+"""Streamlit entry point for the InsightAnalytica application."""
 
 from __future__ import annotations
 
@@ -28,6 +28,7 @@ from data_loader import load_file
 from pipeline_history import load_recent_runs
 from pipeline_orchestrator import reject_cleaning, run_analysis, start_pipeline
 from pipeline_state import ApprovalStatus, PipelineRun, PipelineStage
+from query_engine import CleanedQueryResult, answer_with_cleaned_sql, should_execute_query
 from utils import categorical_columns, numeric_columns
 from visualization import (
     plot_aggregated_bar,
@@ -42,7 +43,9 @@ from visualization import (
 
 APP_DIR = Path(__file__).parent
 SAMPLE_DATA = APP_DIR / "sample_data.csv"
-HEADER_ART = APP_DIR / "assets" / "analytics_header.svg"
+APP_NAME = "InsightAnalytica"
+APP_TAGLINE = "Enterprise AI data intelligence"
+HEADER_ART = APP_DIR / "assets" / "insightanalytica_logo.png"
 VOICE_RECORDER = components.declare_component("voice_recorder", path=str(APP_DIR / "voice_recorder"))
 
 NAV_ITEMS = [
@@ -175,7 +178,7 @@ TOKEN_CHARS_ESTIMATE = 4
 
 
 st.set_page_config(
-    page_title="AI Data Analyst",
+    page_title=APP_NAME,
     page_icon=":bar_chart:",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -189,7 +192,7 @@ def inject_css() -> None:
         <style>
         :root {
             color-scheme: light;
-            --app-bg: #f7f9fc;
+            --app-bg: #f4f7fb;
             --panel: #ffffff;
             --panel-soft: #f9fbff;
             --panel-border: #d9e4f2;
@@ -200,8 +203,8 @@ def inject_css() -> None:
             --sidebar-line: #d7e4f1;
             --sidebar-ink: #102033;
             --sidebar-muted: #64748b;
-            --accent: #2563eb;
-            --accent-2: #0f766e;
+            --accent: #1d4ed8;
+            --accent-2: #0891b2;
             --accent-3: #e11d48;
             --accent-warm: #f59e0b;
             --accent-soft: #e8f1ff;
@@ -327,7 +330,7 @@ def inject_css() -> None:
 
         [data-testid="stSidebar"] {
             background:
-                linear-gradient(180deg, #ffffff 0%, #f2faf6 48%, #f7f8ff 100%) !important;
+                linear-gradient(180deg, #ffffff 0%, #f3f8ff 54%, #f8fbff 100%) !important;
             border-right: 1px solid var(--sidebar-line);
             box-shadow: 4px 0 28px rgba(16, 32, 51, 0.06);
         }
@@ -353,13 +356,35 @@ def inject_css() -> None:
         }
 
         .sidebar-brand {
-            padding: 0 0 0.85rem 0;
+            padding: 0 0 0.95rem 0;
             border-bottom: 1px solid var(--sidebar-line);
             margin-bottom: 0.85rem;
         }
 
+        .sidebar-brand-logo {
+            width: 100%;
+            max-width: 176px;
+            height: 70px;
+            border: 1px solid #d5e8f6;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #eaf7ff 0%, #ffffff 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 0.65rem;
+        }
+
+        .sidebar-brand-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            object-position: center;
+        }
+
         .sidebar-brand-title {
-            color: #0f2f2b !important;
+            color: #0b2545 !important;
             font-size: 1.35rem;
             font-weight: 760;
             line-height: 1.2;
@@ -563,6 +588,15 @@ def inject_css() -> None:
             height: 112px;
             object-fit: cover;
             animation: soft-float 7s ease-in-out infinite;
+        }
+
+        .app-logo-card {
+            background: linear-gradient(135deg, #dff4ff 0%, #f8fbff 54%, #ffffff 100%);
+        }
+
+        .app-logo-card img {
+            object-fit: contain;
+            object-position: center;
         }
 
         .app-meta-row,
@@ -1631,11 +1665,14 @@ def apply_sidebar_filters(df: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
 
 def render_sidebar() -> tuple[pd.DataFrame | None, pd.DataFrame | None, str, str | None, str | None, list[str]]:
     """Render sidebar controls and return dataset state."""
+    logo_uri = asset_data_uri(HEADER_ART, "image/png")
+    logo_html = f'<img src="{logo_uri}" alt="{APP_NAME} logo" />' if logo_uri else ""
     st.sidebar.markdown(
-        """
+        f"""
         <div class="sidebar-brand">
-            <div class="sidebar-brand-title">AI Data Analyst</div>
-            <div class="sidebar-brand-subtitle">Analytics workspace</div>
+            <div class="sidebar-brand-logo">{logo_html}</div>
+            <div class="sidebar-brand-title">{APP_NAME}</div>
+            <div class="sidebar-brand-subtitle">{APP_TAGLINE}</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -1674,7 +1711,7 @@ def render_sidebar() -> tuple[pd.DataFrame | None, pd.DataFrame | None, str, str
         st.sidebar.download_button(
             "Download current view",
             data=filtered_df.to_csv(index=False).encode("utf-8"),
-            file_name="ai_data_analyst_view.csv",
+            file_name="insightanalytica_view.csv",
             mime="text/csv",
             width="stretch",
         )
@@ -1763,13 +1800,13 @@ def render_app_topbar(
     source = escape(source_name or "Dataset")
     navigation = st.session_state.get("navigation", "Overview")
     page_title, page_subtitle = PAGE_COPY.get(navigation, ("Analysis Workspace", "Explore the active dataset."))
-    art_uri = asset_data_uri(HEADER_ART, "image/svg+xml")
+    art_uri = asset_data_uri(HEADER_ART, "image/png")
     with st.container(border=True):
         left, right = st.columns([4.4, 1.6], vertical_alignment="center")
         with left:
             st.markdown(
                 f"""
-                <div class="app-eyebrow">AI Data Analyst</div>
+                <div class="app-eyebrow">{APP_NAME}</div>
                 <div class="app-title">{escape(page_title)}</div>
                 <div class="app-subtitle">{escape(page_subtitle)}</div>
                 <div class="app-meta-row">
@@ -1783,13 +1820,13 @@ def render_app_topbar(
         with right:
             if art_uri:
                 st.markdown(
-                    f'<div class="app-visual-card"><img src="{art_uri}" alt="Analytics dashboard visual" /></div>',
+                    f'<div class="app-visual-card app-logo-card"><img src="{art_uri}" alt="{APP_NAME} logo" /></div>',
                     unsafe_allow_html=True,
                 )
             st.download_button(
                 "Export CSV",
                 data=df.to_csv(index=False).encode("utf-8"),
-                file_name="ai_data_analyst_export.csv",
+                file_name="insightanalytica_export.csv",
                 mime="text/csv",
                 icon=":material/download:",
                 width="stretch",
@@ -2231,12 +2268,69 @@ def render_conversation_empty_state() -> None:
             <div class="conversation-empty-title">Start a conversation with your dataset</div>
             <div class="conversation-empty-body">
                 Ask for trends, definitions, outlier explanations, reporting caveats, or follow-up analysis.
-                The assistant keeps recent chat context and uses the active filtered dataset view.
+                For numerical questions, it cleans a query workspace and returns computed result tables.
             </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
+
+
+def _format_result_value(value: object) -> str:
+    """Format query output values for compact markdown tables."""
+    if pd.isna(value):
+        return ""
+    if isinstance(value, float):
+        return f"{value:,.2f}".rstrip("0").rstrip(".")
+    if isinstance(value, int):
+        return f"{value:,}"
+    return str(value)
+
+
+def dataframe_to_markdown_table(df: pd.DataFrame, max_rows: int = 25) -> str:
+    """Render a small DataFrame as a markdown table without optional dependencies."""
+    if df.empty:
+        return "_The query returned no rows._"
+
+    display_df = df.head(max_rows)
+    columns = [str(column) for column in display_df.columns]
+    header = "| " + " | ".join(columns) + " |"
+    separator = "| " + " | ".join(["---"] * len(columns)) + " |"
+    rows = []
+    for _, row in display_df.iterrows():
+        values = [_format_result_value(row[column]).replace("|", "\\|") for column in display_df.columns]
+        rows.append("| " + " | ".join(values) + " |")
+    table = "\n".join([header, separator, *rows])
+    if len(df) > max_rows:
+        table += f"\n\n_Showing first {max_rows:,} rows of {len(df):,} returned rows._"
+    return table
+
+
+def format_cleaned_query_response(result: CleanedQueryResult) -> str:
+    """Format an executed analytical query as a productized AI response."""
+    cleaning = "\n".join(f"- {action}" for action in result.cleaning_actions[:6])
+    if len(result.cleaning_actions) > 6:
+        cleaning += f"\n- {len(result.cleaning_actions) - 6:,} additional cleaning action(s) were applied."
+    mode_label = "rule-based aggregation" if result.mode == "deterministic" else "validated AI-generated SQL"
+    return (
+        "Summary\n"
+        f"I cleaned a working copy of the active dataset and computed the result using {mode_label}. "
+        f"The query returned {result.row_count:,} row(s).\n\n"
+        "Evidence\n"
+        f"{dataframe_to_markdown_table(result.result_df)}\n\n"
+        "Caveats\n"
+        f"{cleaning}\n"
+        "- The source dataset was not modified; cleaning was applied only to the query workspace.\n\n"
+        "Recommended Next Steps\n"
+        "- Use the result table for reporting, or adjust filters and ask a follow-up question for a narrower cut."
+    )
+
+
+def render_execution_details(result: CleanedQueryResult) -> None:
+    """Show optional execution metadata without making code the primary answer."""
+    with st.expander("Execution details", expanded=False):
+        st.caption(result.plan_summary)
+        st.code(result.sql, language="sql")
 
 
 def submit_conversation_message(df: pd.DataFrame, question: str) -> bool:
@@ -2254,18 +2348,32 @@ def submit_conversation_message(df: pd.DataFrame, question: str) -> bool:
         st.markdown(question)
 
     with st.chat_message("assistant"):
-        with st.spinner("Thinking through the dataset..."):
+        spinner_label = "Cleaning data and running analysis..." if should_execute_query(question) else "Thinking through the dataset..."
+        with st.spinner(spinner_label):
             try:
-                response = conversation_ai(
-                    df,
-                    question,
-                    history=messages[:-1],
-                    model=selected_ai_model(),
-                    reasoning_effort=selected_reasoning_effort(),
-                    max_tokens=ask_output_tokens(),
-                    context_max_chars=demo_context_chars(),
-                )
+                query_result: CleanedQueryResult | None = None
+                if should_execute_query(question):
+                    query_result = answer_with_cleaned_sql(
+                        df,
+                        question,
+                        model=selected_ai_model(),
+                        reasoning_effort=selected_reasoning_effort(),
+                        max_tokens=min(ask_output_tokens(), 700),
+                    )
+                    response = format_cleaned_query_response(query_result)
+                else:
+                    response = conversation_ai(
+                        df,
+                        question,
+                        history=messages[:-1],
+                        model=selected_ai_model(),
+                        reasoning_effort=selected_reasoning_effort(),
+                        max_tokens=ask_output_tokens(),
+                        context_max_chars=demo_context_chars(),
+                    )
                 render_ai_response(response)
+                if query_result is not None:
+                    render_execution_details(query_result)
                 messages.append({"role": "assistant", "content": response})
                 record_demo_usage("Conversation AI", question, response, ask_output_tokens())
                 if st.session_state.get("voice_output_enabled"):
@@ -2871,15 +2979,15 @@ def render_code_generator(df: pd.DataFrame) -> None:
 def render_empty_state(load_error: str | None = None) -> None:
     """Render state before a dataset is available."""
     st.markdown(
-        """
+        f"""
         <div class="empty-workspace">
-            <div class="app-eyebrow">AI Data Analyst</div>
+            <div class="app-eyebrow">{APP_NAME}</div>
             <div class="empty-title">Start with a dataset</div>
-            <div class="empty-lead">Upload a CSV or Excel workbook from the sidebar, or try the sample dataset to explore the workspace.</div>
+            <div class="empty-lead">Upload a CSV or Excel workbook from the sidebar, or try the sample dataset to launch the enterprise analytics workspace.</div>
             <div class="empty-steps">
                 <span>CSV and XLSX</span>
-                <span>Local preview</span>
-                <span>AI-assisted analysis</span>
+                <span>Governed preview</span>
+                <span>AI-assisted intelligence</span>
             </div>
         </div>
         """,
