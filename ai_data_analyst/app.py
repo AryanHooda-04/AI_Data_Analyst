@@ -50,13 +50,13 @@ BRAND_MARK = APP_DIR / "assets" / "insightanalytica_mark.png"
 VOICE_RECORDER = components.declare_component("voice_recorder", path=str(APP_DIR / "voice_recorder"))
 
 NAV_ITEMS = [
-    {"label": "Overview", "short": "Overview", "icon": ":material/dashboard:"},
-    {"label": "Conversation AI", "short": "AI Chat", "icon": ":material/forum:"},
-    {"label": "Visualizations", "short": "Charts", "icon": ":material/monitoring:"},
-    {"label": "Insights & Anomalies", "short": "Insights", "icon": ":material/troubleshoot:"},
-    {"label": "Agent Pipeline", "short": "Pipeline", "icon": ":material/account_tree:"},
-    {"label": "Code Generator", "short": "Code", "icon": ":material/code:"},
-    {"label": "Presentation Mode", "short": "Present", "icon": ":material/present_to_all:"},
+    {"label": "Overview", "short": "Overview"},
+    {"label": "Conversation AI", "short": "AI Chat"},
+    {"label": "Visualizations", "short": "Charts"},
+    {"label": "Insights & Anomalies", "short": "Insights"},
+    {"label": "Agent Pipeline", "short": "Pipeline"},
+    {"label": "Code Generator", "short": "Code"},
+    {"label": "Presentation Mode", "short": "Present"},
 ]
 
 PAGE_COPY = {
@@ -166,14 +166,26 @@ def asset_data_uri(path: Path, mime_type: str) -> str:
 
 
 ASSISTANT_CHAT_AVATAR = asset_data_uri(BRAND_MARK, "image/png")
+USER_CHAT_AVATAR = (
+    "data:image/svg+xml;base64,"
+    + base64.b64encode(
+        b"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+<defs><linearGradient id="g" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+<stop stop-color="#7c3aed"/><stop offset="1" stop-color="#2563eb"/></linearGradient></defs>
+<rect width="64" height="64" rx="16" fill="url(#g)"/>
+<circle cx="32" cy="24" r="9" fill="#f5f3ff"/>
+<path d="M17 49c2.7-9.5 9-14 15-14s12.3 4.5 15 14" fill="none" stroke="#f5f3ff" stroke-width="6" stroke-linecap="round"/>
+</svg>"""
+    ).decode("ascii")
+)
 
 
 def chat_avatar(role: str) -> str:
     """Return the branded avatar for a chat role."""
     normalized_role = str(role or "").lower()
     if normalized_role in {"assistant", "ai"}:
-        return ASSISTANT_CHAT_AVATAR or ":material/auto_awesome:"
-    return ":material/person:"
+        return ASSISTANT_CHAT_AVATAR or USER_CHAT_AVATAR
+    return USER_CHAT_AVATAR
 
 
 def active_theme_mode() -> str:
@@ -1088,8 +1100,45 @@ def inject_css() -> None:
     st.markdown(
         """
         <style>
+        @import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0,0");
+
         :root {
         """ + theme_css_variables() + """
+        }
+
+        .material-symbols-rounded,
+        [class*="material-symbols"],
+        [class*="MaterialSymbols"] {
+            font-family: "Material Symbols Rounded" !important;
+            font-weight: normal !important;
+            font-style: normal !important;
+            line-height: 1 !important;
+            letter-spacing: normal !important;
+            text-transform: none !important;
+            white-space: nowrap !important;
+            direction: ltr !important;
+            -webkit-font-feature-settings: "liga" !important;
+            -webkit-font-smoothing: antialiased !important;
+            font-feature-settings: "liga" !important;
+        }
+
+        [data-testid="stSidebar"] [data-testid="stIconMaterial"],
+        [data-testid="stSidebarCollapseButton"] [data-testid="stIconMaterial"],
+        .stButton [data-testid="stIconMaterial"],
+        .stDownloadButton [data-testid="stIconMaterial"] {
+            display: none !important;
+            font-size: 0 !important;
+            max-width: 0 !important;
+            overflow: hidden !important;
+        }
+
+        [data-testid="stSidebar"] span:has(> [data-testid="stIconMaterial"]),
+        .stButton span:has(> [data-testid="stIconMaterial"]),
+        .stDownloadButton span:has(> [data-testid="stIconMaterial"]) {
+            display: none !important;
+            font-size: 0 !important;
+            max-width: 0 !important;
+            overflow: hidden !important;
         }
 
         @keyframes page-rise {
@@ -1120,6 +1169,18 @@ def inject_css() -> None:
             visibility: visible !important;
             opacity: 1 !important;
             pointer-events: auto !important;
+            font-size: 0 !important;
+            width: 2.2rem !important;
+            height: 2.2rem !important;
+            border-radius: 8px !important;
+        }
+
+        [data-testid="stSidebarCollapseButton"]::before {
+            content: "‹";
+            color: var(--sidebar-ink);
+            font-size: 1.8rem;
+            line-height: 1;
+            font-weight: 700;
         }
 
         [data-testid="collapsedControl"],
@@ -1164,6 +1225,23 @@ def inject_css() -> None:
             color: #ffffff !important;
             fill: currentColor !important;
             stroke: currentColor !important;
+        }
+
+        [data-testid="collapsedControl"] > *,
+        [data-testid="stSidebarCollapsedControl"] > *,
+        [data-testid="stExpandSidebarButton"] > *,
+        [data-testid="stSidebarCollapseButton"] > * {
+            font-size: 0 !important;
+            color: transparent !important;
+            max-width: 0 !important;
+            overflow: hidden !important;
+        }
+
+        [data-testid="stSidebarCollapseButton"] * {
+            font-size: 0 !important;
+            color: transparent !important;
+            max-width: 0 !important;
+            overflow: hidden !important;
         }
 
         .stApp,
@@ -1575,6 +1653,34 @@ def inject_css() -> None:
             background: linear-gradient(90deg, var(--accent), var(--accent-2)) !important;
             color: #ffffff !important;
             border-color: transparent !important;
+        }
+
+        .st-key-nav_Overview button::before,
+        .st-key-top_nav_Overview button::before { content: "▦"; }
+        .st-key-nav_Conversation-AI button::before,
+        .st-key-top_nav_Conversation-AI button::before { content: "◌"; }
+        .st-key-nav_Visualizations button::before,
+        .st-key-top_nav_Visualizations button::before { content: "▥"; }
+        .st-key-nav_Insights--Anomalies button::before,
+        .st-key-top_nav_Insights--Anomalies button::before { content: "⌕"; }
+        .st-key-nav_Agent-Pipeline button::before,
+        .st-key-top_nav_Agent-Pipeline button::before { content: "⎇"; }
+        .st-key-nav_Code-Generator button::before,
+        .st-key-top_nav_Code-Generator button::before { content: "<>"; }
+        .st-key-nav_Presentation-Mode button::before,
+        .st-key-top_nav_Presentation-Mode button::before { content: "▣"; }
+
+        [class*="st-key-nav_"] button::before,
+        [class*="st-key-top_nav_"] button::before {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 1rem;
+            margin-right: 0.4rem;
+            font-family: inherit !important;
+            font-size: 0.9rem;
+            font-weight: 800;
+            line-height: 1;
         }
 
         .app-meta-row,
@@ -3187,7 +3293,6 @@ def render_sidebar() -> tuple[pd.DataFrame | None, pd.DataFrame | None, str, str
         st.sidebar.button(
             item["label"],
             key=f"nav_{item['label']}",
-            icon=item["icon"],
             type="primary" if selected else "secondary",
             width="stretch",
             on_click=set_navigation,
@@ -3197,8 +3302,8 @@ def render_sidebar() -> tuple[pd.DataFrame | None, pd.DataFrame | None, str, str
 
     st.sidebar.markdown('<div class="sidebar-section-title">Session tools</div>', unsafe_allow_html=True)
     tool_cols = st.sidebar.columns([0.9, 1.15])
-    tool_cols[0].button("Reset", icon=":material/restart_alt:", on_click=reset_workspace_state, width="stretch")
-    tool_cols[1].button("Clear chat", icon=":material/delete_sweep:", on_click=clear_ai_chat, width="stretch")
+    tool_cols[0].button("Reset", on_click=reset_workspace_state, width="stretch")
+    tool_cols[1].button("Clear chat", on_click=clear_ai_chat, width="stretch")
 
     st.sidebar.markdown('<div class="sidebar-section-title">AI status</div>', unsafe_allow_html=True)
     st.sidebar.selectbox("GPT model", MODEL_OPTIONS, key="model_choice")
@@ -3261,7 +3366,6 @@ def render_app_topbar(
     mark_html = f'<span class="brand-mark"><img src="{mark_uri}" alt="{APP_NAME} mark" /></span>' if mark_uri else ""
     is_dark = active_theme_mode() == "Dark"
     theme_label = "Light mode" if is_dark else "Dark mode"
-    theme_icon = ":material/light_mode:" if is_dark else ":material/dark_mode:"
     with st.container(border=True, key="app_topbar"):
         left, right = st.columns([4.2, 1.8], vertical_alignment="center")
         with left:
@@ -3288,7 +3392,6 @@ def render_app_topbar(
             action_cols[0].button(
                 theme_label,
                 key="theme_toggle_button",
-                icon=theme_icon,
                 width="stretch",
                 on_click=toggle_theme_mode,
             )
@@ -3297,7 +3400,6 @@ def render_app_topbar(
                 data=df.to_csv(index=False).encode("utf-8"),
                 file_name="insightanalytica_export.csv",
                 mime="text/csv",
-                icon=":material/download:",
                 width="stretch",
             )
 
@@ -3312,7 +3414,6 @@ def render_top_workspace_nav(active_navigation: str) -> None:
             cols[idx].button(
                 item.get("short", label),
                 key=f"top_nav_{label}",
-                icon=item["icon"],
                 type="primary" if active_navigation == label else "secondary",
                 width="stretch",
                 on_click=set_navigation,
@@ -3689,7 +3790,7 @@ def render_voice_controls() -> str | None:
             filename = upload.name or f"voice_input.{extension}"
             st.audio(audio_bytes, format=f"audio/{extension}")
 
-        if st.button("Transcribe to message", icon=":material/keyboard_voice:", disabled=audio_bytes is None):
+        if st.button("Transcribe to message", disabled=audio_bytes is None):
             if audio_bytes and demo_mode_enabled() and len(audio_bytes) > DEMO_MAX_AUDIO_BYTES:
                 st.warning(f"Demo mode limits audio input to {DEMO_MAX_AUDIO_MB:,} MB.")
                 return None
@@ -3729,9 +3830,9 @@ def render_voice_controls() -> str | None:
             st.caption("Latest transcript")
             st.code(st.session_state["last_transcript"], language="text")
             transcript_cols = st.columns(2)
-            if transcript_cols[0].button("Send transcript", icon=":material/send:", type="primary", width="stretch"):
+            if transcript_cols[0].button("Send transcript", type="primary", width="stretch"):
                 transcript_to_send = st.session_state["last_transcript"]
-            if transcript_cols[1].button("Clear transcript", icon=":material/close:", width="stretch"):
+            if transcript_cols[1].button("Clear transcript", width="stretch"):
                 st.session_state["last_transcript"] = ""
                 st.session_state["conversation_draft"] = ""
                 st.rerun()
@@ -4275,11 +4376,11 @@ def render_agent_pipeline(df: pd.DataFrame, source_name: str | None) -> None:
     dataset_name = source_name or "Filtered dataset"
 
     control_cols = st.columns([1.1, 1, 3.5], vertical_alignment="center")
-    if control_cols[0].button("Start pipeline", icon=":material/play_arrow:", type="primary", width="stretch"):
+    if control_cols[0].button("Start pipeline", type="primary", width="stretch"):
         with st.spinner("Running cleaning and verification agents..."):
             st.session_state["pipeline_run"] = start_pipeline(df, dataset_name)
         st.rerun()
-    if control_cols[1].button("Reset pipeline", icon=":material/restart_alt:", width="stretch"):
+    if control_cols[1].button("Reset pipeline", width="stretch"):
         st.session_state["pipeline_run"] = None
         st.rerun()
     control_cols[2].caption(f"Source: {dataset_name} · {df.shape[0]:,} rows · {df.shape[1]:,} columns")
@@ -4345,15 +4446,15 @@ def render_agent_pipeline(df: pd.DataFrame, source_name: str | None) -> None:
             unsafe_allow_html=True,
         )
         approve_cols = st.columns(3)
-        if approve_cols[0].button("Approve cleaned data", icon=":material/check_circle:", type="primary", width="stretch"):
+        if approve_cols[0].button("Approve cleaned data", type="primary", width="stretch"):
             with st.spinner("Running analysis agents in parallel..."):
                 st.session_state["pipeline_run"] = run_analysis(run, use_cleaned_data=True)
             st.rerun()
-        if approve_cols[1].button("Analyze raw data", icon=":material/database:", width="stretch"):
+        if approve_cols[1].button("Analyze raw data", width="stretch"):
             with st.spinner("Running analysis agents on raw data..."):
                 st.session_state["pipeline_run"] = run_analysis(run, use_cleaned_data=False)
             st.rerun()
-        if approve_cols[2].button("Reject proposal", icon=":material/block:", width="stretch"):
+        if approve_cols[2].button("Reject proposal", width="stretch"):
             st.session_state["pipeline_run"] = reject_cleaning(run)
             st.warning("Cleaning proposal marked as rejected. Start a new pipeline run to retry.")
             st.rerun()
@@ -4482,7 +4583,6 @@ def render_empty_state(load_error: str | None = None) -> None:
             st.error(load_error)
         st.button(
             "Load sample dataset",
-            icon=":material/table_chart:",
             type="primary",
             on_click=enable_sample_dataset,
         )
