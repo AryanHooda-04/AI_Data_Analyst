@@ -101,8 +101,10 @@ CODE_PROMPTS = [
 
 AI_RESPONSE_SECTIONS = [
     "Summary",
+    "Query Result",
     "Evidence",
     "Caveats",
+    "Guardrails",
     "Recommended Next Steps",
 ]
 
@@ -166,6 +168,24 @@ def asset_data_uri(path: Path, mime_type: str) -> str:
 
 
 ASSISTANT_CHAT_AVATAR = asset_data_uri(BRAND_MARK, "image/png")
+USER_CHAT_AVATAR = (
+    "data:image/svg+xml;base64,"
+    + base64.b64encode(
+        b"""
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+          <defs>
+            <linearGradient id="g" x1="10" x2="54" y1="8" y2="58" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#7c3aed"/>
+              <stop offset="1" stop-color="#2563eb"/>
+            </linearGradient>
+          </defs>
+          <rect width="64" height="64" rx="16" fill="url(#g)"/>
+          <circle cx="32" cy="25" r="10" fill="#fff" opacity=".95"/>
+          <path d="M16 52c2.7-10 10-16 16-16s13.3 6 16 16" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+        </svg>
+        """
+    ).decode("ascii")
+)
 
 
 def chat_avatar(role: str) -> str:
@@ -173,7 +193,7 @@ def chat_avatar(role: str) -> str:
     normalized_role = str(role or "").lower()
     if normalized_role in {"assistant", "ai"}:
         return ASSISTANT_CHAT_AVATAR or ":material/auto_awesome:"
-    return ":material/person:"
+    return USER_CHAT_AVATAR
 
 
 def active_theme_mode() -> str:
@@ -1564,6 +1584,16 @@ def inject_css() -> None:
             padding-right: 0.55rem;
         }
 
+        .st-key-top_workspace_nav .stButton > button p,
+        .st-key-theme_toggle_button button p,
+        [data-testid="stSidebar"] .stButton > button p,
+        .stDownloadButton > button p {
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            line-height: 1.1 !important;
+        }
+
         .st-key-top_workspace_nav .stButton > button:hover {
             border-color: #9ec8f7 !important;
             background: #f3f8ff !important;
@@ -1993,6 +2023,184 @@ def inject_css() -> None:
             margin: 0.2rem 0 0.7rem 0;
         }
 
+        .analysis-context-grid,
+        .guardrail-grid,
+        .quality-score-grid,
+        .executive-summary-grid,
+        .ai-insight-grid {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 0.65rem;
+            margin: 0.55rem 0 0.85rem 0;
+        }
+
+        .context-card,
+        .guardrail-card,
+        .quality-score-card,
+        .executive-summary-card,
+        .ai-insight-card,
+        .table-shell,
+        .chart-control-panel,
+        .chart-preview-panel,
+        .loading-card {
+            background: var(--panel);
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .context-card,
+        .guardrail-card,
+        .quality-score-card,
+        .executive-summary-card,
+        .ai-insight-card {
+            padding: 0.72rem 0.78rem;
+        }
+
+        .context-label,
+        .guardrail-label,
+        .quality-score-label,
+        .executive-summary-label,
+        .ai-insight-label,
+        .table-label,
+        .chart-builder-label {
+            color: var(--muted) !important;
+            font-size: 0.68rem;
+            font-weight: 760;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-bottom: 0.28rem;
+        }
+
+        .context-value,
+        .quality-score-value,
+        .executive-summary-value,
+        .ai-insight-title {
+            color: var(--ink) !important;
+            font-size: 0.94rem;
+            font-weight: 760;
+            line-height: 1.28;
+        }
+
+        .guardrail-value,
+        .ai-insight-body,
+        .executive-summary-body {
+            color: var(--muted) !important;
+            font-size: 0.84rem;
+            line-height: 1.45;
+        }
+
+        .guardrail-card {
+            border-left: 3px solid var(--accent-2);
+        }
+
+        .ai-insight-card {
+            border-top: 3px solid var(--accent);
+        }
+
+        .ai-insight-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.38rem;
+            margin-top: 0.58rem;
+        }
+
+        .risk-pill {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            border: 1px solid var(--panel-border);
+            color: var(--ink) !important;
+            background: var(--panel-soft);
+            padding: 0.16rem 0.42rem;
+            font-size: 0.7rem;
+            font-weight: 720;
+        }
+
+        .table-shell {
+            padding: 0.82rem;
+            margin: 0.5rem 0 1rem 0;
+        }
+
+        .table-header-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 0.75rem;
+            align-items: flex-end;
+            margin-bottom: 0.65rem;
+        }
+
+        .table-title {
+            color: var(--ink) !important;
+            font-size: 1.04rem;
+            font-weight: 780;
+        }
+
+        .table-count {
+            color: var(--muted) !important;
+            font-size: 0.82rem;
+        }
+
+        .chart-builder-grid {
+            display: grid;
+            grid-template-columns: minmax(18rem, 0.85fr) minmax(0, 1.85fr);
+            gap: 1rem;
+            align-items: start;
+            margin-top: 0.65rem;
+        }
+
+        .chart-control-panel,
+        .chart-preview-panel {
+            padding: 0.85rem;
+        }
+
+        .chart-preview-panel {
+            min-width: 0;
+        }
+
+        .loading-card {
+            position: relative;
+            overflow: hidden;
+            padding: 0.9rem 1rem;
+            margin: 0.35rem 0 0.75rem 0;
+        }
+
+        .loading-card::before {
+            content: "";
+            position: absolute;
+            inset: 0 auto 0 0;
+            width: 3px;
+            background: linear-gradient(180deg, var(--accent), var(--accent-2), var(--accent-warm));
+        }
+
+        .loading-title {
+            color: var(--ink) !important;
+            font-weight: 780;
+            margin-bottom: 0.45rem;
+        }
+
+        .loading-steps {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+
+        .loading-step {
+            color: var(--ink) !important;
+            background: var(--panel-soft);
+            border: 1px solid var(--panel-border);
+            border-radius: 999px;
+            padding: 0.2rem 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .query-result-caption {
+            color: var(--muted) !important;
+            font-size: 0.8rem;
+            margin-bottom: 0.4rem;
+        }
+
         .presentation-band {
             background: #ffffff;
             border: 1px solid var(--panel-border);
@@ -2296,7 +2504,12 @@ def inject_css() -> None:
 
             .empty-grid,
             .agent-grid,
-            .glossary-grid {
+            .glossary-grid,
+            .analysis-context-grid,
+            .guardrail-grid,
+            .quality-score-grid,
+            .executive-summary-grid,
+            .ai-insight-grid {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
             }
 
@@ -2434,7 +2647,13 @@ def inject_css() -> None:
 
             .glossary-grid,
             .agent-grid,
-            .empty-grid {
+            .empty-grid,
+            .analysis-context-grid,
+            .guardrail-grid,
+            .quality-score-grid,
+            .executive-summary-grid,
+            .ai-insight-grid,
+            .chart-builder-grid {
                 grid-template-columns: 1fr;
                 gap: 0.65rem;
             }
@@ -2443,7 +2662,15 @@ def inject_css() -> None:
             .conversation-empty,
             .presentation-band,
             .approval-panel,
-            .ai-response-card {
+            .ai-response-card,
+            .context-card,
+            .guardrail-card,
+            .quality-score-card,
+            .executive-summary-card,
+            .ai-insight-card,
+            .table-shell,
+            .chart-control-panel,
+            .chart-preview-panel {
                 padding: 0.78rem 0.82rem;
             }
 
@@ -2545,6 +2772,9 @@ def initialize_state() -> None:
         "generated_code": "",
         "conversation_draft": "",
         "code_request": "",
+        "pending_ai_prompt": "",
+        "analysis_history": [],
+        "saved_ai_insights": [],
         "navigation": "Overview",
         "use_sample_dataset": True,
         "chart_intent": "Auto",
@@ -2580,6 +2810,9 @@ def reset_chat_if_dataset_changed(df: pd.DataFrame) -> None:
         st.session_state["generated_code"] = ""
         st.session_state["conversation_draft"] = ""
         st.session_state["code_request"] = ""
+        st.session_state["pending_ai_prompt"] = ""
+        st.session_state["analysis_history"] = []
+        st.session_state["saved_ai_insights"] = []
         st.session_state["pipeline_run"] = None
 
 
@@ -2827,6 +3060,9 @@ def reset_workspace_state() -> None:
         "generated_code": "",
         "conversation_draft": "",
         "code_request": "",
+        "pending_ai_prompt": "",
+        "analysis_history": [],
+        "saved_ai_insights": [],
         "navigation": "Overview",
         "chart_intent": "Auto",
         "overview_focus": "",
@@ -3246,6 +3482,105 @@ def search_dataframe(df: pd.DataFrame, query: str) -> pd.DataFrame:
     return df[mask]
 
 
+def compact_value(value: object, *, max_chars: int = 48) -> str:
+    """Return a compact display value for UI cards."""
+    text = str(value or "")
+    return text if len(text) <= max_chars else f"{text[: max_chars - 1]}..."
+
+
+def render_current_analysis_context(
+    df: pd.DataFrame,
+    source_name: str | None,
+    active_filters: list[str],
+    *,
+    compact: bool = False,
+) -> None:
+    """Show the exact context used by AI analysis."""
+    filter_value = f"{len(active_filters)} active" if active_filters else "None"
+    cards = [
+        ("Dataset", compact_value(source_name or "Active dataset")),
+        ("Rows", f"{len(df):,} active"),
+        ("Filters", filter_value),
+        ("Model", selected_ai_model()),
+        ("SQL execution", "Enabled" if should_execute_query("maximum value") else "Enabled"),
+    ]
+    if compact:
+        cards = cards[:4]
+    cols = st.columns(len(cards))
+    for idx, (label, value) in enumerate(cards):
+        with cols[idx]:
+            with st.container(border=True):
+                st.caption(label)
+                st.markdown(f"**{value}**")
+
+
+def render_table_workspace(
+    title: str,
+    df: pd.DataFrame,
+    key_prefix: str,
+    *,
+    default_rows: int = 50,
+    download_name: str = "dataset_view.csv",
+) -> pd.DataFrame:
+    """Render a polished dataframe workspace with search, density, rows, and download."""
+    st.markdown(
+        f"""
+        <div class="table-shell">
+            <div class="table-header-row">
+                <div>
+                    <div class="table-label">Table Workspace</div>
+                    <div class="table-title">{escape(title)}</div>
+                </div>
+                <div class="table-count">{len(df):,} available rows</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    controls = st.columns([2.0, 1.0, 1.0, 1.0], vertical_alignment="bottom")
+    query = controls[0].text_input(
+        "Search",
+        placeholder="Search across all columns",
+        key=f"{key_prefix}_search",
+    )
+    filtered = search_dataframe(df, query)
+    max_rows = max(1, min(max(len(filtered), 1), 500))
+    default_value = min(max(default_rows, 1), max_rows)
+    if max_rows <= 1:
+        rows_to_show = 1
+        controls[1].caption("Rows to show")
+        controls[1].markdown("1")
+    else:
+        rows_to_show = controls[1].slider(
+            "Rows to show",
+            min_value=1,
+            max_value=max_rows,
+            value=default_value,
+            key=f"{key_prefix}_rows",
+        )
+    controls[2].radio(
+        "Density",
+        ["Comfortable", "Compact"],
+        horizontal=True,
+        key=f"{key_prefix}_density",
+    )
+    current_density = st.session_state.get(f"{key_prefix}_density", st.session_state.get("table_density", "Comfortable"))
+    row_height = 28 if current_density == "Compact" else 36
+    controls[3].download_button(
+        "Download",
+        data=filtered.to_csv(index=False).encode("utf-8"),
+        file_name=download_name,
+        mime="text/csv",
+        icon=":material/download:",
+        width="stretch",
+        key=f"{key_prefix}_download",
+    )
+    shown = filtered.head(rows_to_show)
+    st.caption(f"Showing {len(shown):,} of {len(filtered):,} matching rows")
+    st.dataframe(shown, width="stretch", height=350, row_height=row_height)
+    return filtered
+
+
 def render_app_topbar(
     df: pd.DataFrame,
     raw_df: pd.DataFrame,
@@ -3260,7 +3595,7 @@ def render_app_topbar(
     mark_uri = asset_data_uri(BRAND_MARK, "image/png")
     mark_html = f'<span class="brand-mark"><img src="{mark_uri}" alt="{APP_NAME} mark" /></span>' if mark_uri else ""
     is_dark = active_theme_mode() == "Dark"
-    theme_label = "Light mode" if is_dark else "Dark mode"
+    theme_label = "Light" if is_dark else "Dark"
     theme_icon = ":material/light_mode:" if is_dark else ":material/dark_mode:"
     with st.container(border=True, key="app_topbar"):
         left, right = st.columns([4.2, 1.8], vertical_alignment="center")
@@ -3293,7 +3628,7 @@ def render_app_topbar(
                 on_click=toggle_theme_mode,
             )
             action_cols[1].download_button(
-                "Export CSV",
+                "Export",
                 data=df.to_csv(index=False).encode("utf-8"),
                 file_name="insightanalytica_export.csv",
                 mime="text/csv",
@@ -3487,6 +3822,12 @@ def canonical_ai_section_title(line: str) -> str | None:
         "recommended actions": "Recommended Next Steps",
         "risks": "Caveats",
         "limitations": "Caveats",
+        "query results": "Query Result",
+        "result": "Query Result",
+        "results": "Query Result",
+        "data": "Query Result",
+        "trust guardrails": "Guardrails",
+        "guardrail": "Guardrails",
         "evidence": "Evidence",
         "summary": "Summary",
     }
@@ -3503,6 +3844,9 @@ def canonical_ai_section_title(line: str) -> str | None:
             ("recommended next steps", "Recommended Next Steps"),
             ("next steps", "Recommended Next Steps"),
             ("recommendations", "Recommended Next Steps"),
+            ("query result", "Query Result"),
+            ("query results", "Query Result"),
+            ("guardrails", "Guardrails"),
             ("evidence", "Evidence"),
             ("caveats", "Caveats"),
             ("limitations", "Caveats"),
@@ -3538,7 +3882,57 @@ def parse_ai_sections(content: str) -> list[tuple[str, str]]:
     return [(title, body) for title, body in parsed if body]
 
 
-def render_ai_response(content: str) -> None:
+def render_guardrail_cards(body: str) -> None:
+    """Render guardrail bullets as compact trust cards."""
+    lines = [line.strip(" -*") for line in str(body or "").splitlines() if line.strip(" -*")]
+    if not lines:
+        st.markdown(body)
+        return
+    cards = []
+    for line in lines[:6]:
+        if ":" in line:
+            label, value = line.split(":", 1)
+        else:
+            label, value = "Guardrail", line
+        cards.append(
+            f"""
+            <div class="guardrail-card">
+                <div class="guardrail-label">{escape(short_text(label, max_chars=44))}</div>
+                <div class="guardrail-value">{escape(short_text(value, max_chars=120))}</div>
+            </div>
+            """
+        )
+    st.markdown(f'<div class="guardrail-grid">{"".join(cards)}</div>', unsafe_allow_html=True)
+
+
+def render_query_result_table(result: CleanedQueryResult, key_prefix: str) -> None:
+    """Render a computed query result as a real table with export."""
+    st.markdown(
+        f'<div class="query-result-caption">{result.row_count:,} row(s) returned from the cleaned query workspace.</div>',
+        unsafe_allow_html=True,
+    )
+    st.dataframe(
+        result.result_df,
+        width="stretch",
+        hide_index=True,
+        row_height=table_row_height(),
+    )
+    st.download_button(
+        "Download query result",
+        data=result.result_df.to_csv(index=False).encode("utf-8"),
+        file_name="query_result.csv",
+        mime="text/csv",
+        icon=":material/download:",
+        key=f"{key_prefix}_query_result_download",
+    )
+
+
+def render_ai_response(
+    content: str,
+    *,
+    result: CleanedQueryResult | None = None,
+    key_prefix: str = "ai_response",
+) -> None:
     """Render AI output as structured product cards."""
     sections = parse_ai_sections(content)
     if len(sections) < 2:
@@ -3547,9 +3941,173 @@ def render_ai_response(content: str) -> None:
         return
 
     for title, body in sections:
-        with st.container(border=True):
-            st.markdown(f'<div class="ai-response-card-title">{escape(title)}</div>', unsafe_allow_html=True)
-            st.markdown(body)
+        if title == "Query Result" and result is not None:
+            with st.container(border=True):
+                st.markdown(f'<div class="ai-response-card-title">{escape(title)}</div>', unsafe_allow_html=True)
+                render_query_result_table(result, key_prefix)
+            continue
+        if title == "Guardrails":
+            with st.container(border=True):
+                st.markdown(f'<div class="ai-response-card-title">{escape(title)}</div>', unsafe_allow_html=True)
+                render_guardrail_cards(body)
+            continue
+
+        is_long = len(body) > 1_200 or body.count("\n") > 18
+        if is_long and title not in {"Summary", "Query Result"}:
+            with st.expander(title, expanded=False):
+                st.markdown(body)
+        else:
+            with st.container(border=True):
+                st.markdown(f'<div class="ai-response-card-title">{escape(title)}</div>', unsafe_allow_html=True)
+                st.markdown(body)
+
+
+def section_body(content: str, wanted_title: str) -> str:
+    """Return a parsed AI section body by title."""
+    wanted = wanted_title.lower()
+    for title, body in parse_ai_sections(content):
+        if title.lower() == wanted:
+            return body
+    return ""
+
+
+def first_nonempty_line(text: str, fallback: str) -> str:
+    """Return the first useful non-empty line from a block of text."""
+    for line in str(text or "").splitlines():
+        stripped = line.strip(" -*#`")
+        if stripped:
+            return stripped
+    return fallback
+
+
+def short_text(text: str, *, max_chars: int = 150) -> str:
+    """Shorten text for dashboard cards."""
+    cleaned = re.sub(r"\s+", " ", str(text or "")).strip()
+    return cleaned if len(cleaned) <= max_chars else f"{cleaned[: max_chars - 1]}..."
+
+
+def save_analysis_artifacts(
+    question: str,
+    response: str,
+    result: CleanedQueryResult | None = None,
+) -> None:
+    """Save reusable AI insights and analysis history for workspace recall."""
+    history = st.session_state.setdefault("analysis_history", [])
+    history.insert(
+        0,
+        {
+            "question": question,
+            "summary": short_text(section_body(response, "Summary") or response, max_chars=220),
+            "rows": result.row_count if result else None,
+            "mode": result.mode if result else "AI narrative",
+        },
+    )
+    del history[12:]
+
+    summary = section_body(response, "Summary") or response
+    evidence = section_body(response, "Evidence") or section_body(response, "Query Result")
+    next_steps = section_body(response, "Recommended Next Steps")
+    caveats = section_body(response, "Caveats")
+    insights = st.session_state.setdefault("saved_ai_insights", [])
+    insights.insert(
+        0,
+        {
+            "title": short_text(first_nonempty_line(summary, question), max_chars=86),
+            "metric": f"{result.row_count:,} row(s)" if result else "Narrative insight",
+            "evidence": short_text(first_nonempty_line(evidence, "Based on the active dataset profile."), max_chars=150),
+            "risk": "Medium" if caveats else "Low",
+            "action": short_text(first_nonempty_line(next_steps, "Review and validate before reporting."), max_chars=140),
+        },
+    )
+    del insights[8:]
+
+
+def render_saved_analysis_history() -> None:
+    """Render saved AI analysis history."""
+    history = st.session_state.get("analysis_history", [])
+    if not history:
+        return
+    with st.expander("Saved analysis history", expanded=False):
+        for idx, item in enumerate(history[:8], start=1):
+            rows = item.get("rows")
+            rows_label = f"{rows:,} rows returned" if isinstance(rows, int) else str(item.get("mode", "AI narrative"))
+            st.markdown(
+                f"""
+                <div class="history-row">
+                    <div class="data-story-label">Analysis {idx} - {escape(rows_label)}</div>
+                    <div class="data-story-value">{escape(short_text(str(item.get("question", "Analysis")), max_chars=110))}</div>
+                    <div class="muted">{escape(str(item.get("summary", "")))}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        markdown = "\n\n".join(
+            f"## {item.get('question', 'Analysis')}\n\n{item.get('summary', '')}" for item in history
+        )
+        st.download_button(
+            "Download history",
+            data=markdown.encode("utf-8"),
+            file_name="analysis_history.md",
+            mime="text/markdown",
+            icon=":material/download:",
+        )
+
+
+def render_saved_ai_insight_cards() -> None:
+    """Render reusable AI-generated insight cards."""
+    insights = st.session_state.get("saved_ai_insights", [])
+    if not insights:
+        return
+    st.subheader("AI Insight Cards")
+    cards = []
+    for item in insights[:4]:
+        cards.append(
+            f"""
+            <div class="ai-insight-card">
+                <div class="ai-insight-label">{escape(str(item.get("metric", "Insight")))}</div>
+                <div class="ai-insight-title">{escape(str(item.get("title", "Saved insight")))}</div>
+                <div class="ai-insight-body">{escape(str(item.get("evidence", "")))}</div>
+                <div class="ai-insight-meta">
+                    <span class="risk-pill">Risk: {escape(str(item.get("risk", "Low")))}</span>
+                    <span class="risk-pill">{escape(str(item.get("action", "Review")))}</span>
+                </div>
+            </div>
+            """
+        )
+    st.markdown(f'<div class="ai-insight-grid">{"".join(cards)}</div>', unsafe_allow_html=True)
+
+
+def render_quality_score_explanation(df: pd.DataFrame) -> None:
+    """Explain the dataset quality score using visible ingredients."""
+    health = dataset_health(df)
+    checks = readiness_checks(df)
+    anomalies = outlier_summary(df)
+    anomaly_total = int(anomalies["outlier_count"].sum()) if not anomalies.empty else 0
+    object_columns = [column for column in df.columns if df[column].dtype == "object"]
+    type_issue_count = len(object_columns)
+    date_count = len(detect_datetime_columns(df))
+    ai_ready = sum(1 for item in checks if item["ready"])
+    cards = [
+        ("Health score", f'{int(health["score"])}/100', health_label(health["score"])),
+        ("Missing values", f'{int(health["missing_cells"]):,}', f'{health["missing_percent"]}% of cells'),
+        ("Duplicate rows", f'{int(health["duplicate_rows"]):,}', f'{health["duplicate_percent"]}% of rows'),
+        ("Type review", f"{type_issue_count:,}", "object/text columns to validate"),
+        ("Outliers", f"{anomaly_total:,}", "numeric flags using IQR"),
+        ("Date readiness", f"{date_count:,}", "date-like fields detected"),
+        ("AI readiness", f"{ai_ready}/{len(checks)}", "checks passed"),
+    ]
+    html = "".join(
+        f"""
+        <div class="quality-score-card">
+            <div class="quality-score-label">{escape(label)}</div>
+            <div class="quality-score-value">{escape(value)}</div>
+            <div class="guardrail-value">{escape(detail)}</div>
+        </div>
+        """
+        for label, value, detail in cards
+    )
+    with st.expander("Health score explanation", expanded=False):
+        st.markdown(f'<div class="quality-score-grid">{html}</div>', unsafe_allow_html=True)
 
 
 def render_column_profiler(df: pd.DataFrame) -> None:
@@ -3611,20 +4169,15 @@ def render_overview(df: pd.DataFrame) -> None:
             st.info("Correlation review is active.")
             render_plotly_chart(plot_heatmap(df), key="overview_focus_correlation_heatmap")
     render_insight_cards(df, limit=3)
+    render_saved_ai_insight_cards()
 
-    st.subheader("Dataset Preview")
-    col1, col2, col3 = st.columns([2, 1, 1])
-    with col1:
-        query = st.text_input("Search preview", placeholder="Search across all columns")
-    with col2:
-        max_preview = min(max(len(df), 10), 500)
-        preview_rows = st.slider("Rows to show", 10, max_preview, min(50, max_preview), step=10)
-    with col3:
-        st.radio("Table density", ["Comfortable", "Compact"], horizontal=True, key="table_density")
-
-    preview_df = search_dataframe(df, query)
-    st.caption(f"Showing {min(preview_rows, len(preview_df)):,} of {len(preview_df):,} matching rows")
-    st.dataframe(preview_df.head(preview_rows), width="stretch", height=350, row_height=table_row_height())
+    render_table_workspace(
+        "Dataset Preview",
+        df,
+        "overview_preview",
+        default_rows=50,
+        download_name="dataset_preview.csv",
+    )
 
     render_column_profiler(df)
 
@@ -3797,16 +4350,28 @@ def format_cleaned_query_response(result: CleanedQueryResult) -> str:
     cleaning = "\n".join(f"- {action}" for action in result.cleaning_actions[:6])
     if len(result.cleaning_actions) > 6:
         cleaning += f"\n- {len(result.cleaning_actions) - 6:,} additional cleaning action(s) were applied."
+    if not cleaning:
+        cleaning = "- No cleaning changes were required before execution."
     mode_label = "rule-based aggregation" if result.mode == "deterministic" else "validated AI-generated SQL"
     return (
         "Summary\n"
         f"I cleaned a working copy of the active dataset and computed the result using {mode_label}. "
         f"The query returned {result.row_count:,} row(s).\n\n"
-        "Evidence\n"
+        "Query Result\n"
         f"{dataframe_to_markdown_table(result.result_df)}\n\n"
+        "Evidence\n"
+        f"- Execution mode: {mode_label}.\n"
+        f"- Validated SQL was executed against the cleaned in-memory dataset.\n"
+        f"- Rows returned: {result.row_count:,}.\n\n"
         "Caveats\n"
         f"{cleaning}\n"
-        "- The source dataset was not modified; cleaning was applied only to the query workspace.\n\n"
+        "- Results reflect the active filters currently applied in the workspace.\n\n"
+        "Guardrails\n"
+        "- Data was cleaned before query execution.\n"
+        "- Source dataset unchanged.\n"
+        "- SQL was validated before execution.\n"
+        f"- Rows returned: {result.row_count:,}.\n"
+        "- Assumptions made: ambiguous business terms were mapped to the closest matching column names when confidence was sufficient.\n\n"
         "Recommended Next Steps\n"
         "- Use the result table for reporting, or adjust filters and ask a follow-up question for a narrower cut."
     )
@@ -3819,6 +4384,26 @@ def render_execution_details(result: CleanedQueryResult) -> None:
         st.code(result.sql, language="sql")
 
 
+def render_ai_loading_state(is_query: bool) -> None:
+    """Render a branded AI loading state with visible analysis steps."""
+    steps = [
+        "Reading schema",
+        "Cleaning query workspace" if is_query else "Preparing analysis context",
+        "Running analysis" if is_query else "Reasoning over profile",
+        "Preparing answer",
+    ]
+    step_html = "".join(f'<span class="loading-step">{escape(step)}</span>' for step in steps)
+    st.markdown(
+        f"""
+        <div class="loading-card">
+            <div class="loading-title">Analyzing dataset...</div>
+            <div class="loading-steps">{step_html}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def submit_conversation_message(df: pd.DataFrame, question: str) -> bool:
     """Submit one conversational turn and render the assistant response."""
     question = truncate_demo_text(question.strip())
@@ -3829,73 +4414,107 @@ def submit_conversation_message(df: pd.DataFrame, question: str) -> bool:
         return False
 
     messages = st.session_state.setdefault("ai_messages", [])
-    messages.append({"role": "user", "content": question})
+    user_message_id = f"user_{len(messages)}"
+    messages.append({"role": "user", "content": question, "id": user_message_id})
     with st.chat_message("user", avatar=chat_avatar("user")):
         st.markdown(question)
 
     with st.chat_message("assistant", avatar=chat_avatar("assistant")):
-        spinner_label = "Cleaning data and running analysis..." if should_execute_query(question) else "Thinking through the dataset..."
-        with st.spinner(spinner_label):
-            try:
-                query_result: CleanedQueryResult | None = None
-                if should_execute_query(question):
-                    query_result = answer_with_cleaned_sql(
-                        df,
-                        question,
-                        model=selected_ai_model(),
-                        reasoning_effort=selected_reasoning_effort(),
-                        max_tokens=min(ask_output_tokens(), 700),
+        query_mode = should_execute_query(question)
+        loading_slot = st.empty()
+        try:
+            with loading_slot.container():
+                render_ai_loading_state(query_mode)
+            query_result: CleanedQueryResult | None = None
+            if query_mode:
+                query_result = answer_with_cleaned_sql(
+                    df,
+                    question,
+                    model=selected_ai_model(),
+                    reasoning_effort=selected_reasoning_effort(),
+                    max_tokens=min(ask_output_tokens(), 700),
+                )
+                response = format_cleaned_query_response(query_result)
+            else:
+                response = conversation_ai(
+                    df,
+                    question,
+                    history=messages[:-1],
+                    model=selected_ai_model(),
+                    reasoning_effort=selected_reasoning_effort(),
+                    max_tokens=ask_output_tokens(),
+                    context_max_chars=demo_context_chars(),
+                )
+            loading_slot.empty()
+            assistant_message_id = f"assistant_{len(messages)}"
+            render_ai_response(response, result=query_result, key_prefix=assistant_message_id)
+            if query_result is not None:
+                render_execution_details(query_result)
+            messages.append(
+                {
+                    "role": "assistant",
+                    "content": response,
+                    "id": assistant_message_id,
+                    "query_result": query_result,
+                }
+            )
+            save_analysis_artifacts(question, response, query_result)
+            record_demo_usage("Conversation AI", question, response, ask_output_tokens())
+            if st.session_state.get("voice_output_enabled"):
+                with st.spinner("Generating voice response..."):
+                    audio = text_to_speech(
+                        speech_safe_text(
+                            response,
+                            max_chars=DEMO_TTS_CHAR_LIMIT if demo_mode_enabled() else 12_000,
+                        ),
+                        voice=st.session_state.get("tts_voice", "coral"),
                     )
-                    response = format_cleaned_query_response(query_result)
-                else:
-                    response = conversation_ai(
-                        df,
-                        question,
-                        history=messages[:-1],
-                        model=selected_ai_model(),
-                        reasoning_effort=selected_reasoning_effort(),
-                        max_tokens=ask_output_tokens(),
-                        context_max_chars=demo_context_chars(),
-                    )
-                render_ai_response(response)
-                if query_result is not None:
-                    render_execution_details(query_result)
-                messages.append({"role": "assistant", "content": response})
-                record_demo_usage("Conversation AI", question, response, ask_output_tokens())
-                if st.session_state.get("voice_output_enabled"):
-                    with st.spinner("Generating voice response..."):
-                        audio = text_to_speech(
-                            speech_safe_text(
-                                response,
-                                max_chars=DEMO_TTS_CHAR_LIMIT if demo_mode_enabled() else 12_000,
-                            ),
-                            voice=st.session_state.get("tts_voice", "coral"),
-                        )
-                    st.session_state["last_voice_audio"] = audio
-                    st.audio(
-                        audio,
-                        format="audio/mp3",
-                        autoplay=st.session_state.get("voice_autoplay", False),
-                    )
-            except Exception as exc:  # noqa: BLE001
-                st.error(str(exc))
-                return False
+                st.session_state["last_voice_audio"] = audio
+                st.audio(
+                    audio,
+                    format="audio/mp3",
+                    autoplay=st.session_state.get("voice_autoplay", False),
+                )
+        except Exception as exc:  # noqa: BLE001
+            loading_slot.empty()
+            st.error(str(exc))
+            return False
     return True
 
 
-def render_conversation_ai(df: pd.DataFrame) -> None:
+def render_conversation_ai(
+    df: pd.DataFrame,
+    source_name: str | None,
+    active_filters: list[str],
+) -> None:
     """Render conversational AI analyst chat."""
+    st.subheader("Current Analysis Context")
+    render_current_analysis_context(df, source_name, active_filters)
     st.markdown(
         f"""
         <div class="conversation-toolbar">
             <span class="status-pill">Using {escape(selected_ai_model())}</span>
             <span class="status-pill">{len(st.session_state.get("ai_messages", [])) // 2:,} conversation turns</span>
+            <span class="status-pill">SQL execution enabled</span>
         </div>
         """,
         unsafe_allow_html=True,
     )
     voice_prompt = render_voice_controls()
     shortcut_prompt = render_prompt_buttons(SUGGESTED_QUESTIONS, "conversation_draft", "conversation_prompt")
+    pending_prompt = st.session_state.get("pending_ai_prompt", "")
+    pending_prompt_to_run: str | None = None
+    if pending_prompt:
+        with st.container(border=True):
+            st.caption("Suggested analysis from another workspace")
+            st.markdown(pending_prompt)
+            pending_cols = st.columns(2)
+            if pending_cols[0].button("Run this analysis", type="primary", width="stretch"):
+                pending_prompt_to_run = str(pending_prompt)
+                st.session_state["pending_ai_prompt"] = ""
+            if pending_cols[1].button("Dismiss suggestion", width="stretch"):
+                st.session_state["pending_ai_prompt"] = ""
+                st.rerun()
 
     messages = st.session_state.setdefault("ai_messages", [])
     if not messages:
@@ -3905,16 +4524,21 @@ def render_conversation_ai(df: pd.DataFrame) -> None:
         role = str(message.get("role", "assistant"))
         with st.chat_message(role, avatar=chat_avatar(role)):
             if message["role"] == "assistant":
-                render_ai_response(message["content"])
+                render_ai_response(
+                    message["content"],
+                    result=message.get("query_result"),
+                    key_prefix=str(message.get("id", f"assistant_{id(message)}")),
+                )
             else:
                 st.markdown(message["content"])
+    render_saved_analysis_history()
 
     chat_prompt = st.chat_input(
         "Message Conversation AI...",
         max_chars=DEMO_MAX_REQUEST_CHARS if demo_mode_enabled() else None,
         key="conversation_chat_input",
     )
-    prompt = voice_prompt or shortcut_prompt or chat_prompt
+    prompt = pending_prompt_to_run or voice_prompt or shortcut_prompt or chat_prompt
     if prompt and submit_conversation_message(df, str(prompt)):
         st.session_state["conversation_draft"] = ""
         if voice_prompt:
@@ -3943,88 +4567,109 @@ def render_visualizations(df: pd.DataFrame) -> None:
 
     left, right = st.columns([1, 2.2])
     with left:
-        st.markdown(
-            f'<span class="status-pill">Recommended: {escape(recommended_type)}</span>',
-            unsafe_allow_html=True,
-        )
-        chart_type = st.selectbox(
-            "Chart type",
-            chart_options,
-            index=recommended_index,
-        )
+        with st.container(border=True):
+            st.markdown('<div class="chart-builder-label">Builder controls</div>', unsafe_allow_html=True)
+            st.markdown(
+                f'<span class="status-pill">Recommended: {escape(recommended_type)}</span>',
+                unsafe_allow_html=True,
+            )
+            chart_type = st.selectbox(
+                "Chart type",
+                chart_options,
+                index=recommended_index,
+            )
 
-        try:
-            if chart_type == "Histogram":
-                options = nums or list(df.columns)
-                default = recommendation["x"] if recommendation["x"] in options else options[0]
-                column = st.selectbox("Column", options, index=options.index(default))
-                fig = plot_histogram(df, column)
-            elif chart_type == "Bar chart":
-                options = cats or list(df.columns)
-                default = recommendation["x"] if recommendation["x"] in options else options[0]
-                column = st.selectbox("Column", options, index=options.index(default))
-                fig = plot_bar(df, column)
-            elif chart_type == "Aggregated bar":
-                if not nums:
-                    st.info("Aggregated bars need at least one numeric column.")
-                    return
-                category_options = cats or list(df.columns)
-                category_default = recommendation["x"] if recommendation["x"] in category_options else category_options[0]
-                value_default = recommendation["y"] if recommendation["y"] in nums else nums[0]
-                agg_options = ["sum", "mean", "median", "min", "max", "count"]
-                agg_default = recommendation["aggregation"] if recommendation["aggregation"] in agg_options else "sum"
-                category = st.selectbox("Category", category_options, index=category_options.index(category_default))
-                value = st.selectbox("Value", nums, index=nums.index(value_default))
-                aggregation = st.selectbox("Aggregation", agg_options, index=agg_options.index(str(agg_default)))
-                fig = plot_aggregated_bar(df, category, value, aggregation)
-            elif chart_type == "Line chart":
-                if not nums:
-                    st.info("Line charts need at least one numeric Y column.")
-                    return
-                x_options = list(df.columns)
-                x_default = recommendation["x"] if recommendation["x"] in x_options else x_options[0]
-                y_default = recommendation["y"] if recommendation["y"] in nums else nums[0]
-                x = st.selectbox("X axis", x_options, index=x_options.index(x_default))
-                y = st.selectbox("Y axis", nums, index=nums.index(y_default))
-                fig = plot_line(df, x, y)
-            elif chart_type == "Scatter plot":
-                if len(nums) < 2:
-                    st.info("Scatter plots need at least two numeric columns.")
-                    return
-                x_default = recommendation["x"] if recommendation["x"] in nums else nums[0]
-                y_default = recommendation["y"] if recommendation["y"] in nums else nums[1]
-                x = st.selectbox("X axis", nums, index=nums.index(x_default))
-                y = st.selectbox("Y axis", nums, index=nums.index(y_default))
-                color_options = ["None"] + cats
-                color_default = recommendation["color"] if recommendation["color"] in color_options else "None"
-                color = st.selectbox("Color by", color_options, index=color_options.index(str(color_default)))
-                fig = plot_scatter(df, x, y, None if color == "None" else color)
-            elif chart_type == "Box plot":
-                if not nums:
-                    st.info("Box plots need at least one numeric column.")
-                    return
-                value_default = recommendation["y"] if recommendation["y"] in nums else nums[0]
-                column = st.selectbox("Numeric column", nums, index=nums.index(value_default))
-                group_options = ["None"] + cats
-                group_default = recommendation["x"] if recommendation["x"] in group_options else "None"
-                group_by = st.selectbox("Group by", group_options, index=group_options.index(str(group_default)))
-                fig = plot_box(df, column, None if group_by == "None" else group_by)
-            else:
-                fig = plot_heatmap(df)
-        except Exception as exc:  # noqa: BLE001
-            st.error(str(exc))
-            return
+            chart_description = chart_type
+            try:
+                if chart_type == "Histogram":
+                    options = nums or list(df.columns)
+                    default = recommendation["x"] if recommendation["x"] in options else options[0]
+                    column = st.selectbox("Column", options, index=options.index(default))
+                    chart_description = f"{chart_type} of {column}"
+                    fig = plot_histogram(df, column)
+                elif chart_type == "Bar chart":
+                    options = cats or list(df.columns)
+                    default = recommendation["x"] if recommendation["x"] in options else options[0]
+                    column = st.selectbox("Column", options, index=options.index(default))
+                    chart_description = f"{chart_type} of {column}"
+                    fig = plot_bar(df, column)
+                elif chart_type == "Aggregated bar":
+                    if not nums:
+                        st.info("Aggregated bars need at least one numeric column.")
+                        return
+                    category_options = cats or list(df.columns)
+                    category_default = recommendation["x"] if recommendation["x"] in category_options else category_options[0]
+                    value_default = recommendation["y"] if recommendation["y"] in nums else nums[0]
+                    agg_options = ["sum", "mean", "median", "min", "max", "count"]
+                    agg_default = recommendation["aggregation"] if recommendation["aggregation"] in agg_options else "sum"
+                    category = st.selectbox("Category", category_options, index=category_options.index(category_default))
+                    value = st.selectbox("Value", nums, index=nums.index(value_default))
+                    aggregation = st.selectbox("Aggregation", agg_options, index=agg_options.index(str(agg_default)))
+                    chart_description = f"{aggregation} of {value} by {category}"
+                    fig = plot_aggregated_bar(df, category, value, aggregation)
+                elif chart_type == "Line chart":
+                    if not nums:
+                        st.info("Line charts need at least one numeric Y column.")
+                        return
+                    x_options = list(df.columns)
+                    x_default = recommendation["x"] if recommendation["x"] in x_options else x_options[0]
+                    y_default = recommendation["y"] if recommendation["y"] in nums else nums[0]
+                    x = st.selectbox("X axis", x_options, index=x_options.index(x_default))
+                    y = st.selectbox("Y axis", nums, index=nums.index(y_default))
+                    chart_description = f"{y} over {x}"
+                    fig = plot_line(df, x, y)
+                elif chart_type == "Scatter plot":
+                    if len(nums) < 2:
+                        st.info("Scatter plots need at least two numeric columns.")
+                        return
+                    x_default = recommendation["x"] if recommendation["x"] in nums else nums[0]
+                    y_default = recommendation["y"] if recommendation["y"] in nums else nums[1]
+                    x = st.selectbox("X axis", nums, index=nums.index(x_default))
+                    y = st.selectbox("Y axis", nums, index=nums.index(y_default))
+                    color_options = ["None"] + cats
+                    color_default = recommendation["color"] if recommendation["color"] in color_options else "None"
+                    color = st.selectbox("Color by", color_options, index=color_options.index(str(color_default)))
+                    color_phrase = "" if color == "None" else f" colored by {color}"
+                    chart_description = f"{y} vs {x}{color_phrase}"
+                    fig = plot_scatter(df, x, y, None if color == "None" else color)
+                elif chart_type == "Box plot":
+                    if not nums:
+                        st.info("Box plots need at least one numeric column.")
+                        return
+                    value_default = recommendation["y"] if recommendation["y"] in nums else nums[0]
+                    column = st.selectbox("Numeric column", nums, index=nums.index(value_default))
+                    group_options = ["None"] + cats
+                    group_default = recommendation["x"] if recommendation["x"] in group_options else "None"
+                    group_by = st.selectbox("Group by", group_options, index=group_options.index(str(group_default)))
+                    group_phrase = "" if group_by == "None" else f" grouped by {group_by}"
+                    chart_description = f"distribution of {column}{group_phrase}"
+                    fig = plot_box(df, column, None if group_by == "None" else group_by)
+                else:
+                    chart_description = "correlation heatmap of numeric columns"
+                    fig = plot_heatmap(df)
+            except Exception as exc:  # noqa: BLE001
+                st.error(str(exc))
+                return
 
     with right:
-        render_plotly_chart(fig, key=f"visualization_builder_{chart_type}")
+        with st.container(border=True):
+            st.markdown('<div class="chart-builder-label">Chart preview</div>', unsafe_allow_html=True)
+            render_plotly_chart(fig, key=f"visualization_builder_{chart_type}")
+            if st.button("Explain this chart in AI Chat", icon=":material/auto_awesome:", width="stretch"):
+                st.session_state["pending_ai_prompt"] = (
+                    f"Explain this chart for a business audience: {chart_description}. "
+                    "Call out the key pattern, evidence, caveats, and one recommended action."
+                )
+                st.session_state["navigation"] = "Conversation AI"
+                st.rerun()
 
     with st.expander("Chart source data"):
-        st.dataframe(df.head(250), width="stretch", height=260, row_height=table_row_height())
-        st.download_button(
-            "Download chart source data",
-            data=df.to_csv(index=False).encode("utf-8"),
-            file_name="chart_source_data.csv",
-            mime="text/csv",
+        render_table_workspace(
+            "Chart Source Data",
+            df,
+            "chart_source",
+            default_rows=100,
+            download_name="chart_source_data.csv",
         )
 
 
@@ -4050,6 +4695,7 @@ def render_insights(df: pd.DataFrame) -> None:
         ]
     )
     st.dataframe(quality, width="stretch", hide_index=True, row_height=table_row_height())
+    render_quality_score_explanation(df)
 
     st.subheader("Anomaly Detection")
     nums = numeric_columns(df)
@@ -4084,6 +4730,111 @@ def render_insights(df: pd.DataFrame) -> None:
         )
 
 
+def executive_summary_data(df: pd.DataFrame) -> dict[str, object]:
+    """Build a deterministic executive summary payload."""
+    health = dataset_health(df)
+    nums = numeric_columns(df)
+    cats = categorical_columns(df)
+    dates = detect_datetime_columns(df)
+    insights = generate_insights(df, max_items=5)
+    anomalies = outlier_summary(df)
+    anomaly_total = int(anomalies["outlier_count"].sum()) if not anomalies.empty else 0
+    risks = []
+    if int(health["missing_cells"]) > 0:
+        risks.append(f'{int(health["missing_cells"]):,} missing cells may affect reporting completeness.')
+    if int(health["duplicate_rows"]) > 0:
+        risks.append(f'{int(health["duplicate_rows"]):,} duplicate rows may inflate metrics.')
+    if anomaly_total > 0:
+        risks.append(f"{anomaly_total:,} numeric outlier flags should be reviewed before final reporting.")
+    if not risks:
+        risks.append("No major quality risk was detected in the active dataset view.")
+    recommendation = "Use Conversation AI to validate the top insight and convert it into a stakeholder-ready narrative."
+    if int(health["score"]) < 90:
+        recommendation = "Resolve the highest-impact quality issue before using this view for formal reporting."
+    return {
+        "kpis": [
+            ("Rows", f"{len(df):,}"),
+            ("Fields", f"{df.shape[1]:,}"),
+            ("Metrics", f"{len(nums):,}"),
+            ("Dimensions", f"{len(cats):,}"),
+            ("Time fields", f"{len(dates):,}"),
+            ("Health", f'{int(health["score"])}/100'),
+        ],
+        "insights": insights[:3] or ["Dataset is loaded and ready for exploration."],
+        "risks": risks[:2],
+        "recommendation": recommendation,
+    }
+
+
+def executive_summary_markdown(df: pd.DataFrame) -> str:
+    """Render executive summary data as Markdown."""
+    data = executive_summary_data(df)
+    kpis = "\n".join(f"- **{label}:** {value}" for label, value in data["kpis"])
+    insights = "\n".join(f"{idx}. {item}" for idx, item in enumerate(data["insights"], start=1))
+    risks = "\n".join(f"{idx}. {item}" for idx, item in enumerate(data["risks"], start=1))
+    return (
+        "# InsightAnalytica Executive Summary\n\n"
+        "## KPIs\n"
+        f"{kpis}\n\n"
+        "## Key Insights\n"
+        f"{insights}\n\n"
+        "## Risks\n"
+        f"{risks}\n\n"
+        "## Recommended Action\n"
+        f"{data['recommendation']}\n"
+    )
+
+
+def render_one_click_executive_summary(df: pd.DataFrame) -> None:
+    """Render a polished one-click executive summary."""
+    data = executive_summary_data(df)
+    kpi_html = "".join(
+        f"""
+        <div class="executive-summary-card">
+            <div class="executive-summary-label">{escape(label)}</div>
+            <div class="executive-summary-value">{escape(value)}</div>
+        </div>
+        """
+        for label, value in data["kpis"]
+    )
+    st.markdown(f'<div class="executive-summary-grid">{kpi_html}</div>', unsafe_allow_html=True)
+    left, right = st.columns([1.4, 1.0])
+    with left:
+        st.markdown('<div class="chart-builder-label">3 key insights</div>', unsafe_allow_html=True)
+        for insight in data["insights"]:
+            st.markdown(f'<div class="insight-card">{escape(str(insight))}</div>', unsafe_allow_html=True)
+    with right:
+        st.markdown('<div class="chart-builder-label">2 risks</div>', unsafe_allow_html=True)
+        for risk in data["risks"]:
+            st.markdown(f'<div class="insight-card">{escape(str(risk))}</div>', unsafe_allow_html=True)
+        st.markdown('<div class="chart-builder-label">Recommended action</div>', unsafe_allow_html=True)
+        st.info(str(data["recommendation"]))
+
+    export_cols = st.columns(2)
+    export_cols[0].download_button(
+        "Export summary Markdown",
+        data=executive_summary_markdown(df).encode("utf-8"),
+        file_name="executive_summary.md",
+        mime="text/markdown",
+        icon=":material/download:",
+        width="stretch",
+    )
+    summary_rows = (
+        [{"section": "kpi", "label": label, "value": value} for label, value in data["kpis"]]
+        + [{"section": "insight", "label": f"Insight {idx}", "value": item} for idx, item in enumerate(data["insights"], start=1)]
+        + [{"section": "risk", "label": f"Risk {idx}", "value": item} for idx, item in enumerate(data["risks"], start=1)]
+        + [{"section": "action", "label": "Recommended action", "value": data["recommendation"]}]
+    )
+    export_cols[1].download_button(
+        "Export summary CSV",
+        data=pd.DataFrame(summary_rows).to_csv(index=False).encode("utf-8"),
+        file_name="executive_summary.csv",
+        mime="text/csv",
+        icon=":material/download:",
+        width="stretch",
+    )
+
+
 def render_presentation_mode(df: pd.DataFrame) -> None:
     """Render a clean dashboard-style view for demos and stakeholder review."""
     st.markdown(
@@ -4095,6 +4846,8 @@ def render_presentation_mode(df: pd.DataFrame) -> None:
         """,
         unsafe_allow_html=True,
     )
+    render_one_click_executive_summary(df)
+    render_saved_ai_insight_cards()
     render_insight_cards(df, limit=4)
 
     nums = numeric_columns(df)
@@ -4446,6 +5199,17 @@ def render_code_generator(df: pd.DataFrame) -> None:
                     context_max_chars=demo_context_chars(),
                 )
                 st.session_state["generated_code"] = generated
+                history = st.session_state.setdefault("analysis_history", [])
+                history.insert(
+                    0,
+                    {
+                        "question": request,
+                        "summary": short_text(generated, max_chars=220),
+                        "rows": None,
+                        "mode": "Generated code",
+                    },
+                )
+                del history[12:]
                 record_demo_usage("Code Generator", request, generated, code_output_tokens())
             except Exception as exc:  # noqa: BLE001
                 st.error(str(exc))
@@ -4458,6 +5222,7 @@ def render_code_generator(df: pd.DataFrame) -> None:
             file_name="generated_sql_pandas.md",
             mime="text/markdown",
         )
+    render_saved_analysis_history()
 
 
 def render_empty_state(load_error: str | None = None) -> None:
@@ -4517,7 +5282,7 @@ def main() -> None:
     if navigation == "Overview":
         render_overview(filtered_df)
     elif navigation == "Conversation AI":
-        render_conversation_ai(filtered_df)
+        render_conversation_ai(filtered_df, source_name, active_filters)
     elif navigation == "Visualizations":
         render_visualizations(filtered_df)
     elif navigation == "Insights & Anomalies":
