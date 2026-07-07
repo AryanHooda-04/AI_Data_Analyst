@@ -2238,6 +2238,198 @@ def inject_css() -> None:
             margin-top: 0.58rem;
         }
 
+        .executive-dashboard {
+            margin: 0.85rem 0 1.2rem 0;
+        }
+
+        .executive-kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            gap: 0.7rem;
+            margin-bottom: 0.9rem;
+        }
+
+        .executive-kpi-card,
+        .executive-panel,
+        .ai-finding-card {
+            background: var(--panel);
+            border: 1px solid var(--panel-border);
+            border-radius: 10px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .executive-kpi-card {
+            min-height: 5rem;
+            padding: 0.86rem 0.9rem;
+            border-top: 3px solid var(--accent);
+        }
+
+        .executive-kpi-label,
+        .executive-section-eyebrow,
+        .ai-finding-label,
+        .ai-finding-meta {
+            color: var(--muted) !important;
+            font-size: 0.68rem;
+            font-weight: 780;
+            letter-spacing: 0.055em;
+            text-transform: uppercase;
+        }
+
+        .executive-kpi-value {
+            color: var(--ink) !important;
+            font-size: 1.42rem;
+            font-weight: 780;
+            line-height: 1.12;
+            margin-top: 0.5rem;
+        }
+
+        .executive-story-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.35fr) minmax(17rem, 0.9fr);
+            gap: 0.9rem;
+        }
+
+        .executive-panel {
+            padding: 1rem;
+        }
+
+        .executive-panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            margin-bottom: 0.78rem;
+        }
+
+        .executive-panel-title,
+        .ai-findings-title {
+            color: var(--ink) !important;
+            font-size: 1rem;
+            font-weight: 800;
+            line-height: 1.25;
+        }
+
+        .executive-panel-count {
+            color: var(--accent) !important;
+            background: rgba(0, 148, 255, 0.13);
+            border: 1px solid rgba(0, 148, 255, 0.28);
+            border-radius: 999px;
+            padding: 0.18rem 0.5rem;
+            font-size: 0.72rem;
+            font-weight: 760;
+            white-space: nowrap;
+        }
+
+        .executive-list {
+            display: grid;
+            gap: 0.62rem;
+        }
+
+        .executive-list-row {
+            display: grid;
+            grid-template-columns: 2rem minmax(0, 1fr);
+            gap: 0.68rem;
+            align-items: flex-start;
+            color: var(--ink) !important;
+            background: var(--panel-soft);
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            padding: 0.74rem 0.78rem;
+            line-height: 1.45;
+        }
+
+        .executive-list-index {
+            width: 1.55rem;
+            height: 1.55rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            color: #ffffff !important;
+            background: var(--accent);
+            font-size: 0.74rem;
+            font-weight: 820;
+        }
+
+        .executive-risk .executive-list-index {
+            background: var(--warning);
+        }
+
+        .executive-action-card {
+            margin-top: 0.75rem;
+            background: rgba(0, 148, 255, 0.12);
+            border: 1px solid rgba(0, 148, 255, 0.28);
+            border-left: 3px solid var(--accent);
+            border-radius: 8px;
+            padding: 0.82rem 0.9rem;
+        }
+
+        .executive-action-card .executive-panel-title {
+            font-size: 0.92rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .executive-action-card p,
+        .executive-list-row p {
+            margin: 0 !important;
+        }
+
+        .ai-findings-header {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 1rem;
+            margin: 1.4rem 0 0.7rem 0;
+        }
+
+        .ai-findings-subtitle {
+            color: var(--muted) !important;
+            font-size: 0.84rem;
+            margin-top: 0.18rem;
+        }
+
+        .ai-findings-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.85rem;
+            margin-bottom: 1.1rem;
+        }
+
+        .ai-finding-card {
+            padding: 0.95rem;
+            border-top: 3px solid var(--accent-2);
+        }
+
+        .ai-finding-title {
+            color: var(--ink) !important;
+            font-size: 1rem;
+            font-weight: 800;
+            line-height: 1.35;
+            margin: 0.4rem 0 0.6rem 0;
+        }
+
+        .ai-finding-evidence {
+            color: var(--muted) !important;
+            font-size: 0.86rem;
+            line-height: 1.5;
+            margin-bottom: 0.75rem;
+        }
+
+        .ai-finding-footer {
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr);
+            gap: 0.65rem;
+            align-items: flex-start;
+            border-top: 1px solid var(--panel-border);
+            padding-top: 0.72rem;
+        }
+
+        .ai-finding-action {
+            color: var(--ink) !important;
+            font-size: 0.84rem;
+            line-height: 1.42;
+        }
+
         .risk-pill {
             display: inline-flex;
             align-items: center;
@@ -2781,6 +2973,9 @@ def inject_css() -> None:
             .glossary-grid,
             .agent-grid,
             .empty-grid,
+            .executive-kpi-grid,
+            .executive-story-grid,
+            .ai-findings-grid,
             .analysis-context-grid,
             .guardrail-grid,
             .quality-score-grid,
@@ -4142,6 +4337,20 @@ def short_text(text: str, *, max_chars: int = 150) -> str:
     return cleaned if len(cleaned) <= max_chars else f"{cleaned[: max_chars - 1]}..."
 
 
+def plain_text(text: object, *, max_chars: int | None = None) -> str:
+    """Convert markdown-ish model text into clean card copy."""
+    cleaned = str(text or "")
+    cleaned = re.sub(r"```.*?```", " ", cleaned, flags=re.DOTALL)
+    cleaned = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", cleaned)
+    cleaned = re.sub(r"`([^`]*)`", r"\1", cleaned)
+    cleaned = re.sub(r"\*\*([^*]+)\*\*", r"\1", cleaned)
+    cleaned = re.sub(r"__([^_]+)__", r"\1", cleaned)
+    cleaned = re.sub(r"^[\s>*#-]+", "", cleaned, flags=re.MULTILINE)
+    cleaned = re.sub(r"[*_~]+", "", cleaned)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    return short_text(cleaned, max_chars=max_chars) if max_chars else cleaned
+
+
 def save_analysis_artifacts(
     question: str,
     response: str,
@@ -4168,11 +4377,11 @@ def save_analysis_artifacts(
     insights.insert(
         0,
         {
-            "title": short_text(first_nonempty_line(summary, question), max_chars=86),
+            "title": plain_text(first_nonempty_line(summary, question), max_chars=110),
             "metric": f"{result.row_count:,} row(s)" if result else "Narrative insight",
-            "evidence": short_text(first_nonempty_line(evidence, "Based on the active dataset profile."), max_chars=150),
+            "evidence": plain_text(first_nonempty_line(evidence, "Based on the active dataset profile."), max_chars=220),
             "risk": "Medium" if caveats else "Low",
-            "action": short_text(first_nonempty_line(next_steps, "Review and validate before reporting."), max_chars=140),
+            "action": plain_text(first_nonempty_line(next_steps, "Review and validate before reporting."), max_chars=170),
         },
     )
     del insights[8:]
@@ -4214,20 +4423,42 @@ def render_saved_ai_insight_cards() -> None:
     insights = st.session_state.get("saved_ai_insights", [])
     if not insights:
         return
-    st.subheader("AI Insight Cards")
     visible_insights = insights[:4]
-    for start in range(0, len(visible_insights), 2):
-        row_items = visible_insights[start : start + 2]
-        cols = st.columns(len(row_items))
-        for idx, item in enumerate(row_items):
-            with cols[idx]:
-                with st.container(border=True):
-                    st.caption(str(item.get("metric", "Insight")))
-                    st.markdown(f"**{str(item.get('title', 'Saved insight'))}**")
-                    st.markdown(str(item.get("evidence", "")))
-                    meta_cols = st.columns(2)
-                    meta_cols[0].caption(f"Risk: {item.get('risk', 'Low')}")
-                    meta_cols[1].caption(str(item.get("action", "Review")))
+    cards = []
+    for item in visible_insights:
+        metric = plain_text(item.get("metric", "AI finding"), max_chars=48)
+        title = plain_text(item.get("title", "Saved finding"), max_chars=120)
+        evidence = plain_text(item.get("evidence", "Based on the active dataset."), max_chars=230)
+        risk = plain_text(item.get("risk", "Low"), max_chars=24)
+        action = plain_text(item.get("action", "Review before reporting."), max_chars=180)
+        cards.append(
+            f"""
+            <article class="ai-finding-card">
+                <div class="ai-finding-label">{escape(metric)}</div>
+                <div class="ai-finding-title">{escape(title)}</div>
+                <div class="ai-finding-evidence">{escape(evidence)}</div>
+                <div class="ai-finding-footer">
+                    <span class="risk-pill">Risk: {escape(risk)}</span>
+                    <div class="ai-finding-action">{escape(action)}</div>
+                </div>
+            </article>
+            """
+        )
+    st.markdown(
+        f"""
+        <div class="ai-findings-header">
+            <div>
+                <div class="ai-findings-title">Saved AI Findings</div>
+                <div class="ai-findings-subtitle">Reusable conclusions from the latest Conversation AI analyses.</div>
+            </div>
+            <span class="executive-panel-count">{len(visible_insights)} shown</span>
+        </div>
+        <div class="ai-findings-grid">
+            {''.join(cards)}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def render_quality_score_explanation(df: pd.DataFrame) -> None:
@@ -4984,29 +5215,69 @@ def executive_summary_markdown(df: pd.DataFrame) -> str:
 def render_one_click_executive_summary(df: pd.DataFrame) -> None:
     """Render a polished one-click executive summary."""
     data = executive_summary_data(df)
-    kpis = list(data["kpis"])
-    for start in range(0, len(kpis), 3):
-        row_kpis = kpis[start : start + 3]
-        cols = st.columns(len(row_kpis))
-        for idx, (label, value) in enumerate(row_kpis):
-            with cols[idx]:
-                with st.container(border=True):
-                    st.caption(str(label))
-                    st.markdown(f"**{value}**")
-
-    left, right = st.columns([1.4, 1.0])
-    with left:
-        st.caption("3 key insights")
-        for insight in data["insights"]:
-            with st.container(border=True):
-                st.markdown(str(insight))
-    with right:
-        st.caption("2 risks")
-        for risk in data["risks"]:
-            with st.container(border=True):
-                st.markdown(str(risk))
-        st.caption("Recommended action")
-        st.info(str(data["recommendation"]))
+    kpi_cards = "".join(
+        f"""
+        <div class="executive-kpi-card">
+            <div class="executive-kpi-label">{escape(str(label))}</div>
+            <div class="executive-kpi-value">{escape(str(value))}</div>
+        </div>
+        """
+        for label, value in data["kpis"]
+    )
+    insight_rows = "".join(
+        f"""
+        <div class="executive-list-row">
+            <span class="executive-list-index">{idx}</span>
+            <p>{escape(plain_text(insight, max_chars=210))}</p>
+        </div>
+        """
+        for idx, insight in enumerate(data["insights"], start=1)
+    )
+    risk_rows = "".join(
+        f"""
+        <div class="executive-list-row executive-risk">
+            <span class="executive-list-index">{idx}</span>
+            <p>{escape(plain_text(risk, max_chars=190))}</p>
+        </div>
+        """
+        for idx, risk in enumerate(data["risks"], start=1)
+    )
+    st.markdown(
+        f"""
+        <div class="executive-dashboard">
+            <div class="executive-kpi-grid">
+                {kpi_cards}
+            </div>
+            <div class="executive-story-grid">
+                <section class="executive-panel">
+                    <div class="executive-panel-header">
+                        <div>
+                            <div class="executive-section-eyebrow">Decision summary</div>
+                            <div class="executive-panel-title">Key insights</div>
+                        </div>
+                        <span class="executive-panel-count">{len(data["insights"])} insights</span>
+                    </div>
+                    <div class="executive-list">{insight_rows}</div>
+                </section>
+                <section class="executive-panel">
+                    <div class="executive-panel-header">
+                        <div>
+                            <div class="executive-section-eyebrow">Review queue</div>
+                            <div class="executive-panel-title">Risks and action</div>
+                        </div>
+                        <span class="executive-panel-count">{len(data["risks"])} risks</span>
+                    </div>
+                    <div class="executive-list">{risk_rows}</div>
+                    <div class="executive-action-card">
+                        <div class="executive-panel-title">Recommended action</div>
+                        <p>{escape(plain_text(data["recommendation"], max_chars=220))}</p>
+                    </div>
+                </section>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     export_cols = st.columns(2)
     export_cols[0].download_button(
