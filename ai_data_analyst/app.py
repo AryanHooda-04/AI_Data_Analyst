@@ -3207,6 +3207,36 @@ def inject_css() -> None:
             opacity: 1 !important;
         }
 
+        [data-testid="stCode"] button svg path[d="M0 0h24v24H0V0z"],
+        [data-testid="stCode"] button svg path[d="M0 0h24v24H0z"],
+        [data-testid="stCodeBlock"] button svg path[d="M0 0h24v24H0V0z"],
+        [data-testid="stCodeBlock"] button svg path[d="M0 0h24v24H0z"],
+        [data-testid="stMarkdownContainer"] pre button svg path[d="M0 0h24v24H0V0z"],
+        [data-testid="stMarkdownContainer"] pre button svg path[d="M0 0h24v24H0z"],
+        button[title*="Copy"] svg path[d="M0 0h24v24H0V0z"],
+        button[title*="Copy"] svg path[d="M0 0h24v24H0z"],
+        button[aria-label*="Copy"] svg path[d="M0 0h24v24H0V0z"],
+        button[aria-label*="Copy"] svg path[d="M0 0h24v24H0z"],
+        [data-testid="stChatInput"] button svg path[d="M0 0h24v24H0V0z"],
+        [data-testid="stChatInput"] button svg path[d="M0 0h24v24H0z"],
+        [data-testid="stChatInputSubmitButton"] svg path[d="M0 0h24v24H0V0z"],
+        [data-testid="stChatInputSubmitButton"] svg path[d="M0 0h24v24H0z"] {
+            display: none !important;
+            fill: none !important;
+            stroke: none !important;
+        }
+
+        [data-testid="stCode"] button svg *,
+        [data-testid="stCodeBlock"] button svg *,
+        [data-testid="stMarkdownContainer"] pre button svg *,
+        button[title*="Copy"] svg *,
+        button[aria-label*="Copy"] svg *,
+        [data-testid="stChatInput"] button svg *,
+        [data-testid="stChatInputSubmitButton"] svg * {
+            stroke-width: 2 !important;
+            vector-effect: non-scaling-stroke;
+        }
+
         [data-testid="stChatInput"] button svg,
         [data-testid="stChatInputSubmitButton"] svg {
             width: 1.08rem !important;
