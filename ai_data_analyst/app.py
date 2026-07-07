@@ -7,6 +7,7 @@ import os
 import re
 from html import escape
 from pathlib import Path
+from textwrap import dedent
 
 import pandas as pd
 import streamlit as st
@@ -4502,6 +4503,16 @@ def plain_text(text: object, *, max_chars: int | None = None) -> str:
     return short_text(cleaned, max_chars=max_chars) if max_chars else cleaned
 
 
+def html_block(markup: str) -> str:
+    """Normalize app-owned HTML so Markdown cannot treat indentation as a code block."""
+    return dedent(markup).strip()
+
+
+def render_html(markup: str) -> None:
+    """Render app-owned HTML without letting Markdown turn indentation into code blocks."""
+    st.markdown(html_block(markup), unsafe_allow_html=True)
+
+
 def save_analysis_artifacts(
     question: str,
     response: str,
@@ -4583,19 +4594,17 @@ def render_saved_ai_insight_cards() -> None:
         risk = plain_text(item.get("risk", "Low"), max_chars=24)
         action = plain_text(item.get("action", "Review before reporting."), max_chars=180)
         cards.append(
-            f"""
-            <article class="ai-finding-card">
-                <div class="ai-finding-label">{escape(metric)}</div>
-                <div class="ai-finding-title">{escape(title)}</div>
-                <div class="ai-finding-evidence">{escape(evidence)}</div>
-                <div class="ai-finding-footer">
-                    <span class="risk-pill">Risk: {escape(risk)}</span>
-                    <div class="ai-finding-action">{escape(action)}</div>
-                </div>
-            </article>
-            """
+            '<article class="ai-finding-card">'
+            f'<div class="ai-finding-label">{escape(metric)}</div>'
+            f'<div class="ai-finding-title">{escape(title)}</div>'
+            f'<div class="ai-finding-evidence">{escape(evidence)}</div>'
+            '<div class="ai-finding-footer">'
+            f'<span class="risk-pill">Risk: {escape(risk)}</span>'
+            f'<div class="ai-finding-action">{escape(action)}</div>'
+            "</div>"
+            "</article>"
         )
-    st.markdown(
+    render_html(
         f"""
         <div class="ai-findings-header">
             <div>
@@ -4607,8 +4616,7 @@ def render_saved_ai_insight_cards() -> None:
         <div class="ai-findings-grid">
             {''.join(cards)}
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
 
@@ -5522,33 +5530,27 @@ def render_one_click_executive_summary(df: pd.DataFrame) -> None:
     """Render a polished one-click executive summary."""
     data = executive_summary_data(df)
     kpi_cards = "".join(
-        f"""
-        <div class="executive-kpi-card">
-            <div class="executive-kpi-label">{escape(str(label))}</div>
-            <div class="executive-kpi-value">{escape(str(value))}</div>
-        </div>
-        """
+        '<div class="executive-kpi-card">'
+        f'<div class="executive-kpi-label">{escape(str(label))}</div>'
+        f'<div class="executive-kpi-value">{escape(str(value))}</div>'
+        "</div>"
         for label, value in data["kpis"]
     )
     insight_rows = "".join(
-        f"""
-        <div class="executive-list-row">
-            <span class="executive-list-index">{idx}</span>
-            <p>{escape(plain_text(insight, max_chars=210))}</p>
-        </div>
-        """
+        '<div class="executive-list-row">'
+        f'<span class="executive-list-index">{idx}</span>'
+        f'<p>{escape(plain_text(insight, max_chars=210))}</p>'
+        "</div>"
         for idx, insight in enumerate(data["insights"], start=1)
     )
     risk_rows = "".join(
-        f"""
-        <div class="executive-list-row executive-risk">
-            <span class="executive-list-index">{idx}</span>
-            <p>{escape(plain_text(risk, max_chars=190))}</p>
-        </div>
-        """
+        '<div class="executive-list-row executive-risk">'
+        f'<span class="executive-list-index">{idx}</span>'
+        f'<p>{escape(plain_text(risk, max_chars=190))}</p>'
+        "</div>"
         for idx, risk in enumerate(data["risks"], start=1)
     )
-    st.markdown(
+    render_html(
         f"""
         <div class="executive-dashboard">
             <div class="executive-kpi-grid">
@@ -5581,8 +5583,7 @@ def render_one_click_executive_summary(df: pd.DataFrame) -> None:
                 </section>
             </div>
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
     export_cols = st.columns(2)
