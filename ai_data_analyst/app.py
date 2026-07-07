@@ -4488,11 +4488,34 @@ def parse_ai_sections(content: str) -> list[tuple[str, str]]:
     return [(title, body) for title, body in parsed if body]
 
 
+def safe_ai_markdown(text: str) -> str:
+    """Keep currency values from being interpreted as Streamlit math blocks."""
+    raw_text = str(text or "")
+    if "$" not in raw_text:
+        return raw_text
+
+    def escape_currency(segment: str) -> str:
+        return re.sub(r"(?<!\\)\$(?=\s?\d)", r"\\$", segment)
+
+    fenced_parts = re.split(r"(```.*?```)", raw_text, flags=re.DOTALL)
+    cleaned_parts: list[str] = []
+    for fenced_part in fenced_parts:
+        if fenced_part.startswith("```") and fenced_part.endswith("```"):
+            cleaned_parts.append(fenced_part)
+            continue
+        inline_parts = re.split(r"(`[^`\n]*`)", fenced_part)
+        cleaned_parts.extend(
+            inline_part if inline_part.startswith("`") and inline_part.endswith("`") else escape_currency(inline_part)
+            for inline_part in inline_parts
+        )
+    return "".join(cleaned_parts)
+
+
 def render_guardrail_cards(body: str) -> None:
     """Render guardrail bullets as compact trust cards without raw HTML."""
     lines = [line.strip(" -*") for line in str(body or "").splitlines() if line.strip(" -*")]
     if not lines:
-        st.markdown(body)
+        st.markdown(safe_ai_markdown(body))
         return
     items: list[tuple[str, str]] = []
     for line in lines[:6]:
@@ -4525,7 +4548,7 @@ def render_next_steps_card(body: str) -> None:
     with st.container(border=True):
         st.markdown('<div class="ai-response-card-title">Recommended Next Steps</div>', unsafe_allow_html=True)
         st.caption("Prioritized follow-up actions from this analysis.")
-        st.markdown(cleaned_body)
+        st.markdown(safe_ai_markdown(cleaned_body))
 
 
 def render_query_result_table(result: CleanedQueryResult, key_prefix: str) -> None:
@@ -4560,7 +4583,7 @@ def render_ai_response(
     sections = parse_ai_sections(content)
     if len(sections) < 2:
         with st.container(border=True):
-            st.markdown(content)
+            st.markdown(safe_ai_markdown(content))
         return
 
     for title, body in sections:
@@ -4580,17 +4603,17 @@ def render_ai_response(
         if title == "Evidence":
             with st.container(border=True):
                 st.markdown(f'<div class="ai-response-card-title">{escape(title)}</div>', unsafe_allow_html=True)
-                st.markdown(body)
+                st.markdown(safe_ai_markdown(body))
             continue
 
         is_long = len(body) > 1_200 or body.count("\n") > 18
         if is_long and title not in {"Summary", "Query Result"}:
             with st.expander(title, expanded=False):
-                st.markdown(body)
+                st.markdown(safe_ai_markdown(body))
         else:
             with st.container(border=True):
                 st.markdown(f'<div class="ai-response-card-title">{escape(title)}</div>', unsafe_allow_html=True)
-                st.markdown(body)
+                st.markdown(safe_ai_markdown(body))
 
 
 def section_body(content: str, wanted_title: str) -> str:
@@ -5307,7 +5330,7 @@ def submit_conversation_message(df: pd.DataFrame, question: str, *, extra_contex
     messages.append({"role": "user", "content": question, "id": user_message_id})
     conversation_history = messages[:-1]
     with st.chat_message("user", avatar=chat_avatar("user")):
-        st.markdown(question)
+        st.markdown(safe_ai_markdown(question))
 
     with st.chat_message("assistant", avatar=chat_avatar("assistant")):
         query_mode = should_execute_contextual_query(question, conversation_history)
@@ -5395,7 +5418,7 @@ def render_focused_ai_source(messages: list[dict[str, object]]) -> None:
         st.caption("Source conversation from Saved AI Findings")
         if focused_question:
             st.markdown("**Question**")
-            st.markdown(focused_question)
+            st.markdown(safe_ai_markdown(focused_question))
         if source_response:
             st.markdown("**Assistant response**")
             render_ai_response(
@@ -5454,7 +5477,7 @@ def render_conversation_ai(
                     key_prefix=str(message.get("id", f"assistant_{id(message)}")),
                 )
             else:
-                st.markdown(message["content"])
+                st.markdown(safe_ai_markdown(str(message["content"])))
     render_saved_analysis_history()
 
     chat_prompt = st.chat_input(
