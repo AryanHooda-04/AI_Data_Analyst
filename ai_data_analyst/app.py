@@ -3101,6 +3101,7 @@ def initialize_state() -> None:
         "conversation_draft": "",
         "code_request": "",
         "pending_ai_prompt": "",
+        "pending_ai_context": "",
         "analysis_history": [],
         "saved_ai_insights": [],
         "navigation": "Overview",
@@ -3139,6 +3140,7 @@ def reset_chat_if_dataset_changed(df: pd.DataFrame) -> None:
         st.session_state["conversation_draft"] = ""
         st.session_state["code_request"] = ""
         st.session_state["pending_ai_prompt"] = ""
+        st.session_state["pending_ai_context"] = ""
         st.session_state["analysis_history"] = []
         st.session_state["saved_ai_insights"] = []
         st.session_state["pipeline_run"] = None
@@ -3379,6 +3381,8 @@ def clear_ai_chat() -> None:
     st.session_state["last_voice_audio"] = None
     st.session_state["last_transcript"] = ""
     st.session_state["conversation_draft"] = ""
+    st.session_state["pending_ai_prompt"] = ""
+    st.session_state["pending_ai_context"] = ""
 
 
 def reset_workspace_state() -> None:
@@ -3389,6 +3393,7 @@ def reset_workspace_state() -> None:
         "conversation_draft": "",
         "code_request": "",
         "pending_ai_prompt": "",
+        "pending_ai_context": "",
         "analysis_history": [],
         "saved_ai_insights": [],
         "navigation": "Overview",
@@ -4727,6 +4732,140 @@ def dataframe_to_markdown_table(df: pd.DataFrame, max_rows: int = 25) -> str:
     return table
 
 
+def _string_group_values(series: pd.Series) -> pd.Series:
+    """Return grouping labels with missing values made explicit."""
+    return series.astype("object").where(series.notna(), "Missing")
+
+
+def chart_ai_context(
+    df: pd.DataFrame,
+    chart_type: str,
+    chart_description: str,
+    params: dict[str, object],
+    *,
+    max_rows: int = 45,
+) -> str:
+    """Build compact chart data context for Conversation AI chart explanations."""
+    lines = [
+        "Chart context:",
+        f"- Chart type: {chart_type}",
+        f"- Chart description: {chart_description}",
+        f"- Active dataset rows behind chart: {len(df):,}",
+    ]
+    chart_df = pd.DataFrame()
+
+    try:
+        if chart_type == "Histogram":
+            column = str(params["column"])
+            series = df[column].dropna()
+            lines.append(f"- Column plotted: {column}")
+            if pd.api.types.is_numeric_dtype(series):
+                stats = series.describe(percentiles=[0.25, 0.5, 0.75]).reset_index()
+                stats.columns = ["statistic", column]
+                chart_df = stats
+            else:
+                chart_df = _string_group_values(df[column]).value_counts(dropna=False).head(25).rename_axis(column).reset_index(name="count")
+
+        elif chart_type == "Bar chart":
+            column = str(params["column"])
+            lines.append(f"- Bar categories: {column}")
+            chart_df = _string_group_values(df[column]).value_counts(dropna=False).head(30).rename_axis(column).reset_index(name="count")
+
+        elif chart_type == "Aggregated bar":
+            category = str(params["category"])
+            value = str(params["value"])
+            aggregation = str(params["aggregation"])
+            lines.append(f"- Aggregation: {aggregation}({value}) by {category}")
+            working = df[[category, value]].copy()
+            working[category] = _string_group_values(working[category])
+            if aggregation == "count":
+                chart_df = working.groupby(category, dropna=False).size().reset_index(name="count")
+                sort_col = "count"
+            else:
+                chart_df = working.groupby(category, dropna=False)[value].agg(aggregation).reset_index()
+                sort_col = value
+            chart_df = chart_df.sort_values(sort_col, ascending=False).head(30)
+
+        elif chart_type == "Line chart":
+            x = str(params["x"])
+            y = str(params["y"])
+            lines.append(f"- X axis: {x}")
+            lines.append(f"- Y axis: {y}")
+            working = df[[x, y]].dropna().copy()
+            parsed_x = pd.to_datetime(working[x], errors="coerce")
+            if not working.empty and parsed_x.notna().mean() >= 0.8:
+                working[x] = parsed_x
+            working = working.sort_values(x)
+            numeric_y = pd.to_numeric(working[y], errors="coerce")
+            if numeric_y.notna().any():
+                high_idx = numeric_y.idxmax()
+                low_idx = numeric_y.idxmin()
+                lines.append(f"- Highest point: {working.loc[high_idx, x]} = {_format_result_value(working.loc[high_idx, y])}")
+                lines.append(f"- Lowest point: {working.loc[low_idx, x]} = {_format_result_value(working.loc[low_idx, y])}")
+                if len(working) >= 2:
+                    first_y = numeric_y.dropna().iloc[0]
+                    last_y = numeric_y.dropna().iloc[-1]
+                    direction = "increased" if last_y > first_y else "decreased" if last_y < first_y else "stayed flat"
+                    lines.append(f"- First-to-last direction: {direction} from {_format_result_value(first_y)} to {_format_result_value(last_y)}")
+            chart_df = working.head(max_rows)
+
+        elif chart_type == "Scatter plot":
+            x = str(params["x"])
+            y = str(params["y"])
+            color = params.get("color")
+            columns = [x, y] + ([str(color)] if color else [])
+            lines.append(f"- X axis: {x}")
+            lines.append(f"- Y axis: {y}")
+            if color:
+                lines.append(f"- Color grouping: {color}")
+            working = df[columns].dropna().copy()
+            if pd.api.types.is_numeric_dtype(working[x]) and pd.api.types.is_numeric_dtype(working[y]) and len(working) >= 2:
+                lines.append(f"- Correlation between axes: {working[x].corr(working[y]):.3f}")
+            chart_df = working.head(max_rows)
+
+        elif chart_type == "Box plot":
+            column = str(params["column"])
+            group_by = params.get("group_by")
+            lines.append(f"- Numeric distribution: {column}")
+            if group_by:
+                group_by = str(group_by)
+                lines.append(f"- Grouped by: {group_by}")
+                working = df[[group_by, column]].dropna().copy()
+                working[group_by] = _string_group_values(working[group_by])
+                chart_df = (
+                    working.groupby(group_by, dropna=False)[column]
+                    .agg(
+                        count="count",
+                        min="min",
+                        q1=lambda value: value.quantile(0.25),
+                        median="median",
+                        q3=lambda value: value.quantile(0.75),
+                        max="max",
+                    )
+                    .reset_index()
+                )
+            else:
+                stats = df[column].dropna().describe(percentiles=[0.25, 0.5, 0.75]).reset_index()
+                stats.columns = ["statistic", column]
+                chart_df = stats
+
+        elif chart_type == "Correlation heatmap":
+            corr = correlations(df)
+            lines.append("- Values are Pearson correlations from -1 to 1.")
+            chart_df = corr.round(4).reset_index().rename(columns={"index": "metric"})
+
+    except Exception as exc:  # noqa: BLE001
+        lines.append(f"- Chart context generation warning: {exc}")
+
+    if not chart_df.empty:
+        lines.append("\nChart values:")
+        lines.append(dataframe_to_markdown_table(chart_df, max_rows=max_rows))
+    else:
+        lines.append("- No compact chart table could be generated.")
+
+    return "\n".join(lines)[:7_500]
+
+
 def format_cleaned_query_response(result: CleanedQueryResult) -> str:
     """Format an executed analytical query as a productized AI response."""
     cleaning = "\n".join(f"- {action}" for action in result.cleaning_actions[:6])
@@ -4837,13 +4976,24 @@ def should_execute_contextual_query(message: str, history: list[dict[str, object
     return has_context_reference and has_query_action
 
 
-def submit_conversation_message(df: pd.DataFrame, question: str) -> bool:
+def submit_conversation_message(df: pd.DataFrame, question: str, *, extra_context: str | None = None) -> bool:
     """Submit one conversational turn and render the assistant response."""
     question = truncate_demo_text(question.strip())
     if not question:
         st.warning("Enter a message before sending.")
         return False
-    if not demo_guard_allows("Conversation AI", question, ask_output_tokens()):
+    context = str(extra_context or "").strip()
+    model_question = question
+    if context:
+        model_question = (
+            f"{question}\n\n"
+            "Hidden chart context for the assistant. Use this as the source of truth for the chart explanation; "
+            "do not say the chart or values are unavailable unless this context is insufficient. "
+            "Explain with one key pattern, one or two concrete values, an optional caveat only if meaningful, "
+            "and one recommended action.\n\n"
+            f"{context}"
+        )
+    if not demo_guard_allows("Conversation AI", model_question, ask_output_tokens()):
         return False
 
     messages = st.session_state.setdefault("ai_messages", [])
@@ -4863,7 +5013,7 @@ def submit_conversation_message(df: pd.DataFrame, question: str) -> bool:
             if query_mode:
                 query_result = answer_with_cleaned_sql(
                     df,
-                    question,
+                    model_question,
                     history=conversation_history,
                     model=selected_ai_model(),
                     reasoning_effort=selected_reasoning_effort(),
@@ -4873,7 +5023,7 @@ def submit_conversation_message(df: pd.DataFrame, question: str) -> bool:
             else:
                 response = conversation_ai(
                     df,
-                    question,
+                    model_question,
                     history=conversation_history,
                     model=selected_ai_model(),
                     reasoning_effort=selected_reasoning_effort(),
@@ -4938,8 +5088,10 @@ def render_conversation_ai(
     shortcut_prompt = render_prompt_buttons(SUGGESTED_QUESTIONS, "conversation_draft", "conversation_prompt")
     pending_prompt = st.session_state.get("pending_ai_prompt", "")
     pending_prompt_to_run = str(pending_prompt).strip() if pending_prompt else ""
+    pending_context_to_run = str(st.session_state.get("pending_ai_context", "")).strip() if pending_prompt else ""
     if pending_prompt:
         st.session_state["pending_ai_prompt"] = ""
+        st.session_state["pending_ai_context"] = ""
         st.caption("Running suggested analysis from another workspace.")
 
     messages = st.session_state.setdefault("ai_messages", [])
@@ -4965,7 +5117,8 @@ def render_conversation_ai(
         key="conversation_chat_input",
     )
     prompt = pending_prompt_to_run or voice_prompt or shortcut_prompt or chat_prompt
-    if prompt and submit_conversation_message(df, str(prompt)):
+    extra_context = pending_context_to_run if pending_prompt_to_run else None
+    if prompt and submit_conversation_message(df, str(prompt), extra_context=extra_context):
         st.session_state["conversation_draft"] = ""
         if voice_prompt:
             st.session_state["last_transcript"] = ""
@@ -5006,18 +5159,21 @@ def render_visualizations(df: pd.DataFrame) -> None:
             )
 
             chart_description = chart_type
+            chart_params: dict[str, object] = {}
             try:
                 if chart_type == "Histogram":
                     options = nums or list(df.columns)
                     default = recommendation["x"] if recommendation["x"] in options else options[0]
                     column = st.selectbox("Column", options, index=options.index(default))
                     chart_description = f"{chart_type} of {column}"
+                    chart_params = {"column": column}
                     fig = plot_histogram(df, column)
                 elif chart_type == "Bar chart":
                     options = cats or list(df.columns)
                     default = recommendation["x"] if recommendation["x"] in options else options[0]
                     column = st.selectbox("Column", options, index=options.index(default))
                     chart_description = f"{chart_type} of {column}"
+                    chart_params = {"column": column}
                     fig = plot_bar(df, column)
                 elif chart_type == "Aggregated bar":
                     if not nums:
@@ -5032,6 +5188,7 @@ def render_visualizations(df: pd.DataFrame) -> None:
                     value = st.selectbox("Value", nums, index=nums.index(value_default))
                     aggregation = st.selectbox("Aggregation", agg_options, index=agg_options.index(str(agg_default)))
                     chart_description = f"{aggregation} of {value} by {category}"
+                    chart_params = {"category": category, "value": value, "aggregation": aggregation}
                     fig = plot_aggregated_bar(df, category, value, aggregation)
                 elif chart_type == "Line chart":
                     if not nums:
@@ -5043,6 +5200,7 @@ def render_visualizations(df: pd.DataFrame) -> None:
                     x = st.selectbox("X axis", x_options, index=x_options.index(x_default))
                     y = st.selectbox("Y axis", nums, index=nums.index(y_default))
                     chart_description = f"{y} over {x}"
+                    chart_params = {"x": x, "y": y}
                     fig = plot_line(df, x, y)
                 elif chart_type == "Scatter plot":
                     if len(nums) < 2:
@@ -5057,6 +5215,7 @@ def render_visualizations(df: pd.DataFrame) -> None:
                     color = st.selectbox("Color by", color_options, index=color_options.index(str(color_default)))
                     color_phrase = "" if color == "None" else f" colored by {color}"
                     chart_description = f"{y} vs {x}{color_phrase}"
+                    chart_params = {"x": x, "y": y, "color": None if color == "None" else color}
                     fig = plot_scatter(df, x, y, None if color == "None" else color)
                 elif chart_type == "Box plot":
                     if not nums:
@@ -5069,9 +5228,11 @@ def render_visualizations(df: pd.DataFrame) -> None:
                     group_by = st.selectbox("Group by", group_options, index=group_options.index(str(group_default)))
                     group_phrase = "" if group_by == "None" else f" grouped by {group_by}"
                     chart_description = f"distribution of {column}{group_phrase}"
+                    chart_params = {"column": column, "group_by": None if group_by == "None" else group_by}
                     fig = plot_box(df, column, None if group_by == "None" else group_by)
                 else:
                     chart_description = "correlation heatmap of numeric columns"
+                    chart_params = {}
                     fig = plot_heatmap(df)
             except Exception as exc:  # noqa: BLE001
                 st.error(str(exc))
@@ -5082,10 +5243,9 @@ def render_visualizations(df: pd.DataFrame) -> None:
             st.markdown('<div class="chart-builder-label">Chart preview</div>', unsafe_allow_html=True)
             render_plotly_chart(fig, key=f"visualization_builder_{chart_type}")
             if st.button("Explain this chart in AI Chat", icon=":material/auto_awesome:", width="stretch"):
+                st.session_state["pending_ai_context"] = chart_ai_context(df, chart_type, chart_description, chart_params)
                 st.session_state["pending_ai_prompt"] = (
-                    f"Explain this chart for a business audience: {chart_description}. "
-                    "Keep it concise: highlight the key pattern, mention supporting evidence if available, "
-                    "include a caveat only if it matters, and end with one recommended action."
+                    f"Explain this chart for a business audience: {chart_description}."
                 )
                 st.session_state["navigation"] = "Conversation AI"
                 st.rerun()
