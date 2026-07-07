@@ -965,6 +965,44 @@ def theme_override_css() -> str:
             color: #fde68a !important;
         }
 
+        [data-testid="stFileUploader"] section {
+            background: #0f172a !important;
+            border: 1px dashed #2b405d !important;
+            border-radius: 8px !important;
+            color: var(--ink) !important;
+        }
+
+        [data-testid="stFileUploader"] section *,
+        [data-testid="stFileUploader"] [data-testid="stMarkdownContainer"],
+        [data-testid="stFileUploader"] [data-testid="stMarkdownContainer"] * {
+            color: var(--muted) !important;
+            opacity: 1 !important;
+        }
+
+        [data-testid="stFileUploader"] button,
+        [data-testid="stFileUploader"] button:disabled,
+        [data-testid="stFileUploader"] button[disabled],
+        [data-testid="stFileUploader"] button[aria-disabled="true"] {
+            background: #111827 !important;
+            border: 1px solid #2b405d !important;
+            color: #e7eef8 !important;
+            opacity: 1 !important;
+        }
+
+        [data-testid="stFileUploader"] button *,
+        [data-testid="stFileUploader"] button svg,
+        [data-testid="stFileUploader"] button:disabled *,
+        [data-testid="stFileUploader"] button:disabled svg,
+        [data-testid="stFileUploader"] button[disabled] *,
+        [data-testid="stFileUploader"] button[disabled] svg,
+        [data-testid="stFileUploader"] button[aria-disabled="true"] *,
+        [data-testid="stFileUploader"] button[aria-disabled="true"] svg {
+            color: #e7eef8 !important;
+            fill: currentColor !important;
+            stroke: currentColor !important;
+            opacity: 1 !important;
+        }
+
         .stButton > button,
         .stDownloadButton > button,
         .st-key-theme_toggle_button button,
@@ -2079,6 +2117,43 @@ def inject_css() -> None:
             gap: 0.45rem;
             align-items: center;
             margin: 0.2rem 0 0.7rem 0;
+        }
+
+        .st-key-analysis_context_bar [data-testid="stVerticalBlockBorderWrapper"] {
+            background:
+                linear-gradient(135deg, rgba(56, 189, 248, 0.08), transparent 46%),
+                var(--panel) !important;
+            border-color: var(--panel-border) !important;
+            border-radius: 10px !important;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .st-key-analysis_context_bar [data-testid="stVerticalBlock"] {
+            gap: 0.55rem;
+        }
+
+        .st-key-analysis_context_bar [data-testid="column"] {
+            min-width: 8.5rem;
+        }
+
+        .st-key-analysis_context_bar [data-testid="stVerticalBlockBorderWrapper"] [data-testid="stVerticalBlockBorderWrapper"] {
+            background: var(--panel-soft) !important;
+            border-color: var(--panel-border) !important;
+            border-radius: 8px !important;
+        }
+
+        .st-key-analysis_context_bar [data-testid="stCaptionContainer"],
+        .st-key-analysis_context_bar [data-testid="stCaptionContainer"] * {
+            color: var(--muted) !important;
+            font-size: 0.72rem !important;
+            font-weight: 720 !important;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+        }
+
+        .st-key-analysis_context_bar [data-testid="stMarkdownContainer"] p {
+            color: var(--ink) !important;
+            margin-bottom: 0 !important;
         }
 
         .analysis-context-grid,
@@ -3564,12 +3639,15 @@ def render_current_analysis_context(
     ]
     if compact:
         cards = cards[:4]
-    cols = st.columns(len(cards))
-    for idx, (label, value) in enumerate(cards):
-        with cols[idx]:
-            with st.container(border=True):
-                st.caption(label)
-                st.markdown(f"**{value}**")
+    with st.container(border=True, key="analysis_context_bar"):
+        st.markdown("**Current Analysis Context**")
+        st.caption("This is the exact dataset view used for AI answers and SQL execution.")
+        cols = st.columns(len(cards))
+        for idx, (label, value) in enumerate(cards):
+            with cols[idx]:
+                with st.container(border=True):
+                    st.caption(label)
+                    st.markdown(f"**{value}**")
 
 
 def render_table_workspace(
@@ -4561,7 +4639,6 @@ def render_conversation_ai(
     active_filters: list[str],
 ) -> None:
     """Render conversational AI analyst chat."""
-    st.subheader("Current Analysis Context")
     render_current_analysis_context(df, source_name, active_filters)
     st.markdown(
         f"""
