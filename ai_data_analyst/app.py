@@ -4706,18 +4706,10 @@ def render_conversation_ai(
     voice_prompt = render_voice_controls()
     shortcut_prompt = render_prompt_buttons(SUGGESTED_QUESTIONS, "conversation_draft", "conversation_prompt")
     pending_prompt = st.session_state.get("pending_ai_prompt", "")
-    pending_prompt_to_run: str | None = None
+    pending_prompt_to_run = str(pending_prompt).strip() if pending_prompt else ""
     if pending_prompt:
-        with st.container(border=True):
-            st.caption("Suggested analysis from another workspace")
-            st.markdown(pending_prompt)
-            pending_cols = st.columns(2)
-            if pending_cols[0].button("Run this analysis", type="primary", width="stretch"):
-                pending_prompt_to_run = str(pending_prompt)
-                st.session_state["pending_ai_prompt"] = ""
-            if pending_cols[1].button("Dismiss suggestion", width="stretch"):
-                st.session_state["pending_ai_prompt"] = ""
-                st.rerun()
+        st.session_state["pending_ai_prompt"] = ""
+        st.caption("Running suggested analysis from another workspace.")
 
     messages = st.session_state.setdefault("ai_messages", [])
     if not messages:
@@ -4861,7 +4853,8 @@ def render_visualizations(df: pd.DataFrame) -> None:
             if st.button("Explain this chart in AI Chat", icon=":material/auto_awesome:", width="stretch"):
                 st.session_state["pending_ai_prompt"] = (
                     f"Explain this chart for a business audience: {chart_description}. "
-                    "Call out the key pattern, evidence, caveats, and one recommended action."
+                    "Keep it concise: highlight the key pattern, mention supporting evidence if available, "
+                    "include a caveat only if it matters, and end with one recommended action."
                 )
                 st.session_state["navigation"] = "Conversation AI"
                 st.rerun()

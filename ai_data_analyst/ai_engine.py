@@ -128,8 +128,10 @@ def ask_ai(
         "You are a senior data analyst. Answer clearly with reasoning. "
         "Use only the dataset context provided unless you explicitly label an assumption. "
         "Call out uncertainty, data quality issues, and practical next steps when relevant. "
-        "Return the answer using exactly these Markdown section headings: "
-        "Summary, Evidence, Caveats, Recommended Next Steps."
+        "Do not force a fixed response template. "
+        "For simple questions or clarifications, answer directly in a few concise paragraphs or bullets. "
+        "Use headings such as Summary, Evidence, Caveats, and Recommended Next Steps only when they "
+        "make a substantial analysis easier to scan."
     )
 
     messages: list[dict[str, str]] = [
@@ -171,9 +173,9 @@ def conversation_ai(
         "You are Conversation AI, a senior data analyst embedded in an analytics workspace. "
         "Use the dataset context and the recent chat history to answer naturally, including follow-up questions. "
         "Do not invent facts that are not supported by the dataset context; label assumptions clearly. "
-        "When the user asks for analysis, structure the answer with these Markdown headings when useful: "
-        "Summary, Evidence, Caveats, Recommended Next Steps. "
+        "Do not force every answer into Summary, Evidence, Caveats, and Recommended Next Steps. "
         "For quick clarifications, definitions, or conversational follow-ups, answer directly and concisely. "
+        "For deeper analysis, use only the headings that genuinely improve readability. "
         "If a chart, SQL query, or Pandas snippet would help, suggest it briefly."
     )
 
