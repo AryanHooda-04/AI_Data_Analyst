@@ -2455,59 +2455,85 @@ def inject_css() -> None:
         }
 
         .ai-finding-card {
-            padding: 0.95rem;
-            border-top: 3px solid var(--accent-2);
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
         }
 
-        div[class*="st-key-open_ai_finding"] button {
-            width: 100% !important;
-            min-height: 7.8rem !important;
-            height: auto !important;
-            align-items: flex-start !important;
-            justify-content: flex-start !important;
-            text-align: left !important;
-            white-space: normal !important;
-            border-radius: 10px !important;
-            border: 1px solid var(--panel-border) !important;
-            border-top: 3px solid var(--accent-2) !important;
+        div[class*="st-key-ai_finding_card_"] {
+            min-height: 12rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
             background:
                 linear-gradient(135deg, rgba(56, 189, 248, 0.08), transparent 58%),
                 var(--panel) !important;
+            border: 1px solid var(--panel-border) !important;
+            border-top: 3px solid var(--accent-2) !important;
+            border-radius: 10px !important;
+            box-shadow: var(--shadow-sm);
+            padding: 0.95rem !important;
+        }
+
+        div[class*="st-key-ai_finding_card_"] [data-testid="stVerticalBlock"] {
+            gap: 0.62rem;
+        }
+
+        div[class*="st-key-ai_finding_card_"] [data-testid="stCaptionContainer"],
+        div[class*="st-key-ai_finding_card_"] [data-testid="stCaptionContainer"] * {
+            color: var(--muted) !important;
+            font-size: 0.76rem !important;
+            line-height: 1.38;
+        }
+
+        div[class*="st-key-ai_finding_card_"] [data-testid="stMarkdownContainer"] p {
             color: var(--ink) !important;
-            padding: 0.82rem 0.9rem !important;
-            box-shadow: var(--shadow-sm) !important;
+            margin: 0 !important;
+            line-height: 1.38;
+        }
+
+        div[class*="st-key-ai_finding_card_"] [data-testid="stMarkdownContainer"] strong {
+            color: var(--ink) !important;
+            font-size: 0.98rem;
+            font-weight: 820;
+        }
+
+        div[class*="st-key-ai_finding_card_"] .stButton > button {
+            width: 100% !important;
+            min-height: 2.35rem !important;
+            justify-content: center !important;
+            white-space: normal !important;
+            border-radius: 8px !important;
+            border: 1px solid rgba(56, 189, 248, 0.35) !important;
+            background: rgba(56, 189, 248, 0.12) !important;
+            color: var(--ink) !important;
+            padding: 0.45rem 0.75rem !important;
+            box-shadow: none !important;
             text-shadow: none !important;
         }
 
-        div[class*="st-key-open_ai_finding"] button:hover,
-        div[class*="st-key-open_ai_finding"] button:focus,
-        div[class*="st-key-open_ai_finding"] button:focus-visible,
-        div[class*="st-key-open_ai_finding"] button:active,
-        div[class*="st-key-open_ai_finding"] button:disabled,
-        div[class*="st-key-open_ai_finding"] button[disabled] {
-            background:
-                linear-gradient(135deg, rgba(56, 189, 248, 0.13), transparent 58%),
-                var(--panel-soft) !important;
-            background-color: var(--panel-soft) !important;
+        div[class*="st-key-ai_finding_card_"] .stButton > button:hover,
+        div[class*="st-key-ai_finding_card_"] .stButton > button:focus,
+        div[class*="st-key-ai_finding_card_"] .stButton > button:focus-visible,
+        div[class*="st-key-ai_finding_card_"] .stButton > button:active {
+            background: rgba(56, 189, 248, 0.2) !important;
             border-color: var(--accent) !important;
             color: var(--ink) !important;
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-md) !important;
+            box-shadow: 0 8px 20px rgba(56, 189, 248, 0.12) !important;
             outline: 2px solid rgba(56, 189, 248, 0.24) !important;
             outline-offset: 2px !important;
             opacity: 1 !important;
         }
 
-        div[class*="st-key-open_ai_finding"] button *,
-        div[class*="st-key-open_ai_finding"] button p,
-        div[class*="st-key-open_ai_finding"] button span,
-        div[class*="st-key-open_ai_finding"] button div {
+        div[class*="st-key-ai_finding_card_"] .stButton > button *,
+        div[class*="st-key-ai_finding_card_"] .stButton > button p,
+        div[class*="st-key-ai_finding_card_"] .stButton > button span {
             color: var(--ink) !important;
-            white-space: pre-wrap !important;
-            overflow-wrap: anywhere;
-            text-align: inherit !important;
-            line-height: 1.45;
-            font-size: 0.88rem !important;
+            white-space: normal !important;
+            text-align: center !important;
+            line-height: 1.2;
+            font-size: 0.82rem !important;
+            font-weight: 780 !important;
             margin: 0 !important;
             text-shadow: none !important;
         }
@@ -2524,32 +2550,35 @@ def inject_css() -> None:
 
         .ai-finding-title {
             color: var(--ink) !important;
-            font-size: 1rem;
+            font-size: 0.98rem;
             font-weight: 800;
-            line-height: 1.35;
-            margin: 0.4rem 0 0.6rem 0;
+            line-height: 1.32;
+            margin: 0.15rem 0 0 0;
         }
 
         .ai-finding-evidence {
             color: var(--muted) !important;
             font-size: 0.86rem;
-            line-height: 1.5;
-            margin-bottom: 0.75rem;
+            line-height: 1.45;
+            margin: 0;
         }
 
         .ai-finding-footer {
-            display: grid;
-            grid-template-columns: auto minmax(0, 1fr);
-            gap: 0.65rem;
-            align-items: flex-start;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 0.55rem;
+            align-items: center;
             border-top: 1px solid var(--panel-border);
-            padding-top: 0.72rem;
+            padding-top: 0.68rem;
+            margin-top: 0.1rem;
         }
 
         .ai-finding-action {
-            color: var(--ink) !important;
-            font-size: 0.84rem;
-            line-height: 1.42;
+            color: var(--muted) !important;
+            font-size: 0.78rem;
+            font-weight: 740;
+            line-height: 1.35;
         }
 
         .risk-pill {
@@ -4775,17 +4804,16 @@ def render_saved_ai_insight_cards() -> None:
             title = plain_text(item.get("title", "Saved finding"), max_chars=130)
             evidence = plain_text(item.get("evidence", "Based on the active dataset."), max_chars=180)
             risk = plain_text(item.get("risk", "Low"), max_chars=24)
-            button_label = (
-                f"{metric.upper()}\n\n"
-                f"{title}\n\n"
-                f"{evidence}\n\n"
-                f"Risk: {risk} | Open source conversation"
-            )
+            action = plain_text(item.get("action", "Review before reporting."), max_chars=95)
             with cols[offset]:
-                with st.container(key=f"open_ai_finding_{idx}"):
+                with st.container(key=f"ai_finding_card_{idx}"):
+                    st.caption(metric.upper())
+                    st.markdown(f"**{safe_ai_markdown(title)}**")
+                    st.caption(evidence)
+                    st.caption(f"Risk: {risk} | {action}")
                     if st.button(
-                        button_label,
-                        key=f"open_ai_finding_button_{idx}_{item.get('source_assistant_message_id', idx)}",
+                        "Open source conversation",
+                        key=f"ai_finding_open_button_{idx}_{item.get('source_assistant_message_id', idx)}",
                         width="stretch",
                     ):
                         open_saved_ai_finding(item)
