@@ -4104,22 +4104,19 @@ def render_saved_ai_insight_cards() -> None:
     if not insights:
         return
     st.subheader("AI Insight Cards")
-    cards = []
-    for item in insights[:4]:
-        cards.append(
-            f"""
-            <div class="ai-insight-card">
-                <div class="ai-insight-label">{escape(str(item.get("metric", "Insight")))}</div>
-                <div class="ai-insight-title">{escape(str(item.get("title", "Saved insight")))}</div>
-                <div class="ai-insight-body">{escape(str(item.get("evidence", "")))}</div>
-                <div class="ai-insight-meta">
-                    <span class="risk-pill">Risk: {escape(str(item.get("risk", "Low")))}</span>
-                    <span class="risk-pill">{escape(str(item.get("action", "Review")))}</span>
-                </div>
-            </div>
-            """
-        )
-    st.markdown(f'<div class="ai-insight-grid">{"".join(cards)}</div>', unsafe_allow_html=True)
+    visible_insights = insights[:4]
+    for start in range(0, len(visible_insights), 2):
+        row_items = visible_insights[start : start + 2]
+        cols = st.columns(len(row_items))
+        for idx, item in enumerate(row_items):
+            with cols[idx]:
+                with st.container(border=True):
+                    st.caption(str(item.get("metric", "Insight")))
+                    st.markdown(f"**{str(item.get('title', 'Saved insight'))}**")
+                    st.markdown(str(item.get("evidence", "")))
+                    meta_cols = st.columns(2)
+                    meta_cols[0].caption(f"Risk: {item.get('risk', 'Low')}")
+                    meta_cols[1].caption(str(item.get("action", "Review")))
 
 
 def render_quality_score_explanation(df: pd.DataFrame) -> None:
@@ -4831,26 +4828,28 @@ def executive_summary_markdown(df: pd.DataFrame) -> str:
 def render_one_click_executive_summary(df: pd.DataFrame) -> None:
     """Render a polished one-click executive summary."""
     data = executive_summary_data(df)
-    kpi_html = "".join(
-        f"""
-        <div class="executive-summary-card">
-            <div class="executive-summary-label">{escape(label)}</div>
-            <div class="executive-summary-value">{escape(value)}</div>
-        </div>
-        """
-        for label, value in data["kpis"]
-    )
-    st.markdown(f'<div class="executive-summary-grid">{kpi_html}</div>', unsafe_allow_html=True)
+    kpis = list(data["kpis"])
+    for start in range(0, len(kpis), 3):
+        row_kpis = kpis[start : start + 3]
+        cols = st.columns(len(row_kpis))
+        for idx, (label, value) in enumerate(row_kpis):
+            with cols[idx]:
+                with st.container(border=True):
+                    st.caption(str(label))
+                    st.markdown(f"**{value}**")
+
     left, right = st.columns([1.4, 1.0])
     with left:
-        st.markdown('<div class="chart-builder-label">3 key insights</div>', unsafe_allow_html=True)
+        st.caption("3 key insights")
         for insight in data["insights"]:
-            st.markdown(f'<div class="insight-card">{escape(str(insight))}</div>', unsafe_allow_html=True)
+            with st.container(border=True):
+                st.markdown(str(insight))
     with right:
-        st.markdown('<div class="chart-builder-label">2 risks</div>', unsafe_allow_html=True)
+        st.caption("2 risks")
         for risk in data["risks"]:
-            st.markdown(f'<div class="insight-card">{escape(str(risk))}</div>', unsafe_allow_html=True)
-        st.markdown('<div class="chart-builder-label">Recommended action</div>', unsafe_allow_html=True)
+            with st.container(border=True):
+                st.markdown(str(risk))
+        st.caption("Recommended action")
         st.info(str(data["recommendation"]))
 
     export_cols = st.columns(2)
