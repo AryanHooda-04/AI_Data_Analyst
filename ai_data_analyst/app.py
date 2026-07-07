@@ -2286,6 +2286,44 @@ def inject_css() -> None:
             border-left: 3px solid var(--accent-2);
         }
 
+        div[class*="guardrail_card_"] {
+            min-height: 6.2rem;
+            background:
+                linear-gradient(135deg, rgba(34, 211, 238, 0.09), transparent 62%),
+                var(--panel) !important;
+            border: 1px solid var(--panel-border) !important;
+            border-left: 3px solid var(--accent-2) !important;
+            border-radius: 10px !important;
+            box-shadow: var(--shadow-sm);
+            padding: 0.78rem 0.85rem !important;
+        }
+
+        div[class*="guardrail_card_"] [data-testid="stVerticalBlock"] {
+            gap: 0.34rem;
+        }
+
+        div[class*="guardrail_card_"] [data-testid="stCaptionContainer"],
+        div[class*="guardrail_card_"] [data-testid="stCaptionContainer"] * {
+            color: var(--muted) !important;
+            font-size: 0.68rem !important;
+            font-weight: 780 !important;
+            letter-spacing: 0.05em;
+            line-height: 1.25;
+            text-transform: uppercase;
+        }
+
+        div[class*="guardrail_card_"] [data-testid="stMarkdownContainer"] p {
+            color: var(--ink) !important;
+            margin: 0 !important;
+            line-height: 1.35;
+        }
+
+        div[class*="guardrail_card_"] [data-testid="stMarkdownContainer"] strong {
+            color: var(--ink) !important;
+            font-size: 0.92rem;
+            font-weight: 800;
+        }
+
         .ai-insight-card {
             border-top: 3px solid var(--accent);
         }
@@ -4540,7 +4578,29 @@ def safe_ai_markdown(text: str) -> str:
     return "".join(cleaned_parts)
 
 
-def render_guardrail_cards(body: str) -> None:
+def guardrail_display_item(label: str, value: str) -> tuple[str, str]:
+    """Return a concise product label and value for a guardrail line."""
+    clean_label = plain_text(label, max_chars=40).strip().rstrip(".")
+    clean_value = plain_text(value, max_chars=140).strip().rstrip(".")
+    lookup_text = f"{clean_label} {clean_value}".lower()
+
+    if "source" in lookup_text and "unchanged" in lookup_text:
+        clean_label = "Source integrity"
+    elif "sql" in lookup_text or "validated" in lookup_text:
+        clean_label = "SQL validation"
+    elif "clean" in lookup_text:
+        clean_label = "Clean workspace"
+    elif "rows returned" in lookup_text:
+        clean_label = "Rows returned"
+    elif "assumption" in lookup_text:
+        clean_label = "Assumptions"
+    elif clean_label.lower() == "guardrail":
+        clean_label = "Trust check"
+
+    return clean_label, clean_value
+
+
+def render_guardrail_cards(body: str, key_prefix: str = "guardrail") -> None:
     """Render guardrail bullets as compact trust cards without raw HTML."""
     lines = [line.strip(" -*") for line in str(body or "").splitlines() if line.strip(" -*")]
     if not lines:
@@ -4552,20 +4612,15 @@ def render_guardrail_cards(body: str) -> None:
             label, value = line.split(":", 1)
         else:
             label, value = "Guardrail", line
-        items.append(
-            (
-                plain_text(short_text(label, max_chars=44)),
-                plain_text(short_text(value, max_chars=120)),
-            )
-        )
+        items.append(guardrail_display_item(label, value))
     for start in range(0, len(items), 2):
         row_items = items[start : start + 2]
         cols = st.columns(len(row_items))
         for idx, (label, value) in enumerate(row_items):
             with cols[idx]:
-                with st.container(border=True):
+                with st.container(key=f"{key_prefix}_guardrail_card_{start}_{idx}_{abs(hash(label + value))}"):
                     st.caption(label)
-                    st.markdown(f"**{value}**")
+                    st.markdown(f"**{safe_ai_markdown(value)}**")
 
 
 def render_next_steps_card(body: str) -> None:
@@ -4624,7 +4679,7 @@ def render_ai_response(
         if title == "Guardrails":
             with st.container(border=True):
                 st.markdown(f'<div class="ai-response-card-title">{escape(title)}</div>', unsafe_allow_html=True)
-                render_guardrail_cards(body)
+                render_guardrail_cards(body, key_prefix)
             continue
         if title == "Recommended Next Steps":
             render_next_steps_card(body)
