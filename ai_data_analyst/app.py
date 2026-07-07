@@ -1824,85 +1824,6 @@ def inject_css() -> None:
             line-height: 1.55;
         }
 
-        .next-steps-card {
-            background:
-                linear-gradient(135deg, rgba(56, 189, 248, 0.10), transparent 42%),
-                var(--panel);
-            border: 1px solid var(--panel-border);
-            border-radius: 10px;
-            padding: 0.9rem 1rem;
-            margin-bottom: 0.7rem;
-            box-shadow: var(--shadow-sm);
-        }
-
-        .next-steps-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 0.85rem;
-            margin-bottom: 0.75rem;
-        }
-
-        .next-steps-title {
-            color: var(--ink) !important;
-            font-size: 0.98rem;
-            font-weight: 780;
-            line-height: 1.25;
-        }
-
-        .next-steps-subtitle {
-            color: var(--muted) !important;
-            font-size: 0.8rem;
-            line-height: 1.35;
-            margin-top: 0.16rem;
-        }
-
-        .next-steps-count {
-            color: var(--accent) !important;
-            background: var(--accent-soft);
-            border: 1px solid var(--panel-border);
-            border-radius: 999px;
-            padding: 0.18rem 0.48rem;
-            font-size: 0.72rem;
-            font-weight: 760;
-            white-space: nowrap;
-        }
-
-        .next-step-list {
-            display: grid;
-            gap: 0.48rem;
-        }
-
-        .next-step-item {
-            display: grid;
-            grid-template-columns: 1.65rem minmax(0, 1fr);
-            gap: 0.58rem;
-            align-items: start;
-            background: var(--panel-soft);
-            border: 1px solid var(--panel-border);
-            border-radius: 8px;
-            padding: 0.62rem 0.7rem;
-        }
-
-        .next-step-number {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 1.35rem;
-            height: 1.35rem;
-            border-radius: 999px;
-            background: linear-gradient(135deg, var(--accent), var(--accent-2));
-            color: #ffffff !important;
-            font-size: 0.72rem;
-            font-weight: 800;
-        }
-
-        .next-step-text {
-            color: var(--ink) !important;
-            font-size: 0.9rem;
-            line-height: 1.48;
-        }
-
         [data-testid="stChatMessage"] [data-testid="stVerticalBlockBorderWrapper"] {
             background: var(--panel) !important;
             border: 1px solid var(--panel-border) !important;
@@ -3984,58 +3905,46 @@ def render_guardrail_cards(body: str) -> None:
     st.markdown(f'<div class="guardrail-grid">{"".join(cards)}</div>', unsafe_allow_html=True)
 
 
-def next_step_items(body: str) -> list[str]:
-    """Extract concise next-step items from an AI section."""
-    items: list[str] = []
-    for raw_line in str(body or "").splitlines():
-        line = raw_line.strip()
-        if not line:
-            continue
-        cleaned = re.sub(r"^\s*(?:[-*+]\s+|\d+[\.)]\s+)", "", line).strip()
-        cleaned = cleaned.strip("` ")
-        if cleaned:
-            items.append(cleaned)
-    if not items and body.strip():
-        items = [body.strip()]
-    return items
+def markdown_preview(body: str, *, max_lines: int = 8, max_chars: int = 900) -> tuple[str, bool]:
+    """Return a markdown-safe preview without reinterpreting the model's structure."""
+    text = str(body or "").strip()
+    if not text:
+        return "", False
+
+    lines: list[str] = []
+    char_count = 0
+    for line in text.splitlines():
+        next_count = char_count + len(line) + 1
+        if len(lines) >= max_lines or next_count > max_chars:
+            break
+        lines.append(line)
+        char_count = next_count
+
+    preview = "\n".join(lines).strip()
+    truncated = preview != text
+    if not preview:
+        preview = short_text(text, max_chars=max_chars)
+        truncated = preview != text
+    return preview, truncated
 
 
 def render_next_steps_card(body: str) -> None:
-    """Render recommendations as an action-oriented product card."""
-    items = next_step_items(body)
-    if not items:
-        st.markdown(body)
+    """Render recommendations without flattening markdown headings into fake actions."""
+    cleaned_body = str(body or "").strip()
+    if not cleaned_body:
         return
 
-    visible_items = items[:6]
-    item_html = "".join(
-        f"""
-        <div class="next-step-item">
-            <span class="next-step-number">{idx}</span>
-            <div class="next-step-text">{escape(short_text(item, max_chars=220))}</div>
-        </div>
-        """
-        for idx, item in enumerate(visible_items, start=1)
-    )
-    status = f"{len(items) - len(visible_items):,} more" if len(items) > len(visible_items) else "Ready"
-    st.markdown(
-        f"""
-        <div class="next-steps-card">
-            <div class="next-steps-header">
-                <div>
-                    <div class="next-steps-title">Recommended Next Steps</div>
-                    <div class="next-steps-subtitle">Prioritized follow-up actions from this analysis.</div>
-                </div>
-                <span class="next-steps-count">{escape(status)}</span>
-            </div>
-            <div class="next-step-list">{item_html}</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    if len(items) > len(visible_items) or len(body) > 1_500:
+    preview, is_truncated = markdown_preview(cleaned_body)
+    with st.container(border=True):
+        st.markdown('<div class="ai-response-card-title">Recommended Next Steps</div>', unsafe_allow_html=True)
+        st.caption("Prioritized follow-up actions from this analysis.")
+        st.markdown(preview)
+        if is_truncated:
+            st.caption("Preview only. Open the full recommendation detail below.")
+
+    if is_truncated:
         with st.expander("Show full recommendation detail", expanded=False):
-            st.markdown(body)
+            st.markdown(cleaned_body)
 
 
 def render_query_result_table(result: CleanedQueryResult, key_prefix: str) -> None:
