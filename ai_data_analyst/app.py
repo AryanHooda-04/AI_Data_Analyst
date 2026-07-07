@@ -4141,18 +4141,16 @@ def render_quality_score_explanation(df: pd.DataFrame) -> None:
         ("Date readiness", f"{date_count:,}", "date-like fields detected"),
         ("AI readiness", f"{ai_ready}/{len(checks)}", "checks passed"),
     ]
-    html = "".join(
-        f"""
-        <div class="quality-score-card">
-            <div class="quality-score-label">{escape(label)}</div>
-            <div class="quality-score-value">{escape(value)}</div>
-            <div class="guardrail-value">{escape(detail)}</div>
-        </div>
-        """
-        for label, value, detail in cards
-    )
     with st.expander("Health score explanation", expanded=False):
-        st.markdown(f'<div class="quality-score-grid">{html}</div>', unsafe_allow_html=True)
+        for start in range(0, len(cards), 3):
+            row_cards = cards[start : start + 3]
+            cols = st.columns(len(row_cards))
+            for idx, (label, value, detail) in enumerate(row_cards):
+                with cols[idx]:
+                    with st.container(border=True):
+                        st.caption(label)
+                        st.markdown(f"**{value}**")
+                        st.caption(detail)
 
 
 def render_column_profiler(df: pd.DataFrame) -> None:
