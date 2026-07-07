@@ -604,12 +604,40 @@ def theme_override_css() -> str:
             border-color: transparent !important;
         }
 
-        [data-testid="stChatInput"] button,
-        [data-testid="stChatInput"] button * {
-            background: #e8f1ff !important;
-            color: var(--accent) !important;
+        [data-testid="stChatInput"] button {
+            width: 2.25rem !important;
+            height: 2.25rem !important;
+            min-width: 2.25rem !important;
+            min-height: 2.25rem !important;
+            border-radius: 8px !important;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2)) !important;
+            border: 1px solid transparent !important;
+            color: #ffffff !important;
+            box-shadow: 0 8px 18px rgba(29, 78, 216, 0.18) !important;
+        }
+
+        [data-testid="stChatInput"] button *,
+        [data-testid="stChatInput"] button svg,
+        [data-testid="stChatInput"] button svg * {
+            background: transparent !important;
+            color: inherit !important;
             fill: currentColor !important;
             stroke: currentColor !important;
+            opacity: 1 !important;
+        }
+
+        [data-testid="stChatInput"] button svg {
+            width: 1.05rem !important;
+            height: 1.05rem !important;
+        }
+
+        [data-testid="stChatInput"] button:disabled,
+        [data-testid="stChatInput"] button[disabled],
+        [data-testid="stChatInput"] button[aria-disabled="true"] {
+            background: #e8eef7 !important;
+            border-color: #c9d2e3 !important;
+            color: #64748b !important;
+            box-shadow: none !important;
         }
 
         .meta-pill,
@@ -1081,19 +1109,31 @@ def theme_override_css() -> str:
             border-color: var(--panel-border) !important;
         }
 
-        [data-testid="stChatInput"] button,
+        [data-testid="stChatInput"] button {
+            width: 2.25rem !important;
+            height: 2.25rem !important;
+            min-width: 2.25rem !important;
+            min-height: 2.25rem !important;
+            border-radius: 8px !important;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2)) !important;
+            border: 1px solid transparent !important;
+            color: #ffffff !important;
+            box-shadow: 0 8px 18px rgba(56, 189, 248, 0.18) !important;
+        }
+
         [data-testid="stChatInput"] button *,
-        [data-testid="stChatInput"] svg {
-            background: #1e293b !important;
-            color: #e7eef8 !important;
+        [data-testid="stChatInput"] button svg,
+        [data-testid="stChatInput"] button svg * {
+            background: transparent !important;
+            color: inherit !important;
             fill: currentColor !important;
             stroke: currentColor !important;
             opacity: 1 !important;
         }
 
-        [data-testid="stChatInput"] button {
-            border: 1px solid var(--panel-border) !important;
-            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.20) !important;
+        [data-testid="stChatInput"] button svg {
+            width: 1.05rem !important;
+            height: 1.05rem !important;
         }
 
         [data-testid="stChatInput"] button:disabled,
@@ -1101,6 +1141,8 @@ def theme_override_css() -> str:
         [data-testid="stChatInput"] button[aria-disabled="true"] {
             background: #1e293b !important;
             color: #cbd5e1 !important;
+            border-color: var(--panel-border) !important;
+            box-shadow: none !important;
             opacity: 1 !important;
         }
 
@@ -3080,6 +3122,110 @@ def inject_css() -> None:
             }
         }
         """ + theme_override_css() + """
+
+        /* Native Streamlit control repairs: keep copy/send icons crisp in both themes. */
+        [data-testid="stCode"] button,
+        [data-testid="stCodeBlock"] button,
+        [data-testid="stMarkdownContainer"] pre button,
+        button[title*="Copy"],
+        button[aria-label*="Copy"] {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 2rem !important;
+            height: 2rem !important;
+            min-width: 2rem !important;
+            min-height: 2rem !important;
+            padding: 0 !important;
+            border-radius: 8px !important;
+            background: var(--panel-soft) !important;
+            background-color: var(--panel-soft) !important;
+            border: 1px solid var(--code-border) !important;
+            color: var(--code-ink) !important;
+            box-shadow: var(--shadow-sm) !important;
+            opacity: 1 !important;
+        }
+
+        [data-testid="stCode"] button *,
+        [data-testid="stCodeBlock"] button *,
+        [data-testid="stMarkdownContainer"] pre button *,
+        button[title*="Copy"] *,
+        button[aria-label*="Copy"] *,
+        [data-testid="stCode"] button svg,
+        [data-testid="stCodeBlock"] button svg,
+        [data-testid="stMarkdownContainer"] pre button svg,
+        button[title*="Copy"] svg,
+        button[aria-label*="Copy"] svg {
+            background: transparent !important;
+            background-color: transparent !important;
+            color: inherit !important;
+            fill: currentColor !important;
+            stroke: currentColor !important;
+            opacity: 1 !important;
+        }
+
+        [data-testid="stCode"] button svg,
+        [data-testid="stCodeBlock"] button svg,
+        [data-testid="stMarkdownContainer"] pre button svg,
+        button[title*="Copy"] svg,
+        button[aria-label*="Copy"] svg {
+            width: 1.05rem !important;
+            height: 1.05rem !important;
+        }
+
+        [data-testid="stChatInput"] button,
+        [data-testid="stChatInputSubmitButton"] {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 2.25rem !important;
+            height: 2.25rem !important;
+            min-width: 2.25rem !important;
+            min-height: 2.25rem !important;
+            padding: 0 !important;
+            border-radius: 9px !important;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2)) !important;
+            background-color: var(--accent) !important;
+            border: 1px solid transparent !important;
+            color: #ffffff !important;
+            box-shadow: 0 10px 22px rgba(0, 148, 255, 0.18) !important;
+            opacity: 1 !important;
+        }
+
+        [data-testid="stChatInput"] button *,
+        [data-testid="stChatInput"] button svg,
+        [data-testid="stChatInput"] button svg *,
+        [data-testid="stChatInputSubmitButton"] *,
+        [data-testid="stChatInputSubmitButton"] svg,
+        [data-testid="stChatInputSubmitButton"] svg * {
+            background: transparent !important;
+            background-color: transparent !important;
+            color: inherit !important;
+            fill: currentColor !important;
+            stroke: currentColor !important;
+            opacity: 1 !important;
+        }
+
+        [data-testid="stChatInput"] button svg,
+        [data-testid="stChatInputSubmitButton"] svg {
+            width: 1.08rem !important;
+            height: 1.08rem !important;
+        }
+
+        [data-testid="stChatInput"] button:disabled,
+        [data-testid="stChatInput"] button[disabled],
+        [data-testid="stChatInput"] button[aria-disabled="true"],
+        [data-testid="stChatInputSubmitButton"]:disabled,
+        [data-testid="stChatInputSubmitButton"][disabled],
+        [data-testid="stChatInputSubmitButton"][aria-disabled="true"] {
+            background: var(--panel-soft) !important;
+            background-color: var(--panel-soft) !important;
+            border-color: var(--panel-border) !important;
+            color: var(--muted) !important;
+            box-shadow: none !important;
+            opacity: 1 !important;
+        }
+
         </style>
         """,
         unsafe_allow_html=True,
