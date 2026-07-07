@@ -4555,6 +4555,57 @@ def render_ai_loading_state(is_query: bool) -> None:
     )
 
 
+def should_execute_contextual_query(message: str, history: list[dict[str, object]] | None) -> bool:
+    """Route follow-up analytical requests to the query executor when context is needed."""
+    if should_execute_query(message):
+        return True
+    if not history:
+        return False
+
+    text = re.sub(r"\s+", " ", str(message or "")).strip().lower()
+    if not text:
+        return False
+
+    clarification_markers = (
+        "what do you mean",
+        "what does",
+        "explain",
+        "help me understand",
+        "why",
+        "definition",
+        "define",
+    )
+    if any(marker in text for marker in clarification_markers):
+        return False
+
+    has_recent_assistant_context = any(item.get("role") == "assistant" for item in history[-8:])
+    if not has_recent_assistant_context:
+        return False
+
+    context_references = ("same", "that", "those", "them", "it", "previous", "above", "again", "now")
+    query_actions = (
+        "average",
+        "break down",
+        "breakdown",
+        "compare",
+        "count",
+        "group",
+        "list",
+        "maximum",
+        "minimum",
+        "rank",
+        "show",
+        "split",
+        "sum",
+        "top",
+        "total",
+        "trend",
+    )
+    has_context_reference = any(marker in text for marker in context_references)
+    has_query_action = any(marker in text for marker in query_actions)
+    return has_context_reference and has_query_action
+
+
 def submit_conversation_message(df: pd.DataFrame, question: str) -> bool:
     """Submit one conversational turn and render the assistant response."""
     question = truncate_demo_text(question.strip())
@@ -4567,11 +4618,12 @@ def submit_conversation_message(df: pd.DataFrame, question: str) -> bool:
     messages = st.session_state.setdefault("ai_messages", [])
     user_message_id = f"user_{len(messages)}"
     messages.append({"role": "user", "content": question, "id": user_message_id})
+    conversation_history = messages[:-1]
     with st.chat_message("user", avatar=chat_avatar("user")):
         st.markdown(question)
 
     with st.chat_message("assistant", avatar=chat_avatar("assistant")):
-        query_mode = should_execute_query(question)
+        query_mode = should_execute_contextual_query(question, conversation_history)
         loading_slot = st.empty()
         try:
             with loading_slot.container():
@@ -4581,6 +4633,7 @@ def submit_conversation_message(df: pd.DataFrame, question: str) -> bool:
                 query_result = answer_with_cleaned_sql(
                     df,
                     question,
+                    history=conversation_history,
                     model=selected_ai_model(),
                     reasoning_effort=selected_reasoning_effort(),
                     max_tokens=min(ask_output_tokens(), 700),
@@ -4590,7 +4643,7 @@ def submit_conversation_message(df: pd.DataFrame, question: str) -> bool:
                 response = conversation_ai(
                     df,
                     question,
-                    history=messages[:-1],
+                    history=conversation_history,
                     model=selected_ai_model(),
                     reasoning_effort=selected_reasoning_effort(),
                     max_tokens=ask_output_tokens(),

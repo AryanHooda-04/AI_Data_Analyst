@@ -46,6 +46,8 @@ def should_execute_query(message: str) -> bool:
 
     clarification_markers = (
         "what do you mean",
+        "what does",
+        "what is meant",
         "explain",
         "help me understand",
         "why",
@@ -327,11 +329,28 @@ def _schema_context(df: pd.DataFrame, mapping: dict[str, str], max_columns: int 
     return "\n".join(lines)
 
 
+def _history_context(history: Iterable[dict[str, object]] | None, limit: int = 8) -> str:
+    """Return a compact chat history for resolving follow-up query requests."""
+    if not history:
+        return "No prior conversation context."
+
+    lines: list[str] = []
+    for item in list(history)[-limit:]:
+        role = str(item.get("role", "")).strip().lower()
+        if role not in {"user", "assistant"}:
+            continue
+        content = clean_text(str(item.get("content", "")))
+        if content:
+            lines.append(f"{role}: {content[:1_200]}")
+    return "\n".join(lines) if lines else "No prior conversation context."
+
+
 def _generate_sql(
     cleaned_df: pd.DataFrame,
     mapping: dict[str, str],
     message: str,
     *,
+    history: Iterable[dict[str, object]] | None = None,
     model: str,
     reasoning_effort: str,
     max_tokens: int,
@@ -341,13 +360,19 @@ def _generate_sql(
         f"Use only the table named {TABLE_NAME}. "
         "Return only one SQL query, with no explanation. "
         "Never use mutating statements. "
-        "If the user has a typo, choose the closest matching column from the schema."
+        "If the user has a typo, choose the closest matching column from the schema. "
+        "Use recent conversation context only to resolve follow-up references; "
+        "the SQL must still use only the cleaned schema."
     )
     user_prompt = (
         "Cleaned dataset schema:\n"
         f"{_schema_context(cleaned_df, mapping)}\n\n"
-        f"User request: {clean_text(message)}\n\n"
-        "Write the SQLite query that computes the numerical/table result for the request."
+        "Recent conversation context:\n"
+        f"{_history_context(history)}\n\n"
+        f"Current user request: {clean_text(message)}\n\n"
+        "Resolve pronouns and follow-up phrases such as 'that', 'same', 'now by region', "
+        "and 'compare it' using the recent conversation context when it is relevant. "
+        "Write the SQLite query that computes the numerical/table result for the current request."
     )
     raw_sql = complete_with_messages(
         [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}],
@@ -363,6 +388,7 @@ def answer_with_cleaned_sql(
     df: pd.DataFrame,
     message: str,
     *,
+    history: Iterable[dict[str, object]] | None = None,
     model: str = DEFAULT_MODEL,
     reasoning_effort: str = "none",
     max_tokens: int = 700,
@@ -379,6 +405,7 @@ def answer_with_cleaned_sql(
             cleaned_df,
             mapping,
             message,
+            history=history,
             model=model,
             reasoning_effort=reasoning_effort,
             max_tokens=max_tokens,
@@ -395,4 +422,3 @@ def answer_with_cleaned_sql(
         plan_summary=plan_summary,
         row_count=len(result_df),
     )
-
