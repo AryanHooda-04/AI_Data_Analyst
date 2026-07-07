@@ -1046,10 +1046,68 @@ def theme_override_css() -> str:
         [data-testid="stChatInput"] button,
         [data-testid="stChatInput"] button *,
         [data-testid="stChatInput"] svg {
-            background: #17233a !important;
-            color: var(--ink) !important;
+            background: #1e293b !important;
+            color: #e7eef8 !important;
             fill: currentColor !important;
             stroke: currentColor !important;
+            opacity: 1 !important;
+        }
+
+        [data-testid="stChatInput"] button {
+            border: 1px solid var(--panel-border) !important;
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.20) !important;
+        }
+
+        [data-testid="stChatInput"] button:disabled,
+        [data-testid="stChatInput"] button[disabled],
+        [data-testid="stChatInput"] button[aria-disabled="true"] {
+            background: #1e293b !important;
+            color: #cbd5e1 !important;
+            opacity: 1 !important;
+        }
+
+        [data-testid="stChatInput"] button:disabled *,
+        [data-testid="stChatInput"] button[disabled] *,
+        [data-testid="stChatInput"] button[aria-disabled="true"] *,
+        [data-testid="stChatInput"] button:disabled svg,
+        [data-testid="stChatInput"] button[disabled] svg,
+        [data-testid="stChatInput"] button[aria-disabled="true"] svg {
+            color: #cbd5e1 !important;
+            fill: currentColor !important;
+            stroke: currentColor !important;
+            opacity: 1 !important;
+        }
+
+        [data-testid="stCode"],
+        [data-testid="stCodeBlock"],
+        [data-testid="stMarkdownContainer"] pre {
+            background: #08111f !important;
+            border-color: var(--code-border) !important;
+        }
+
+        [data-testid="stCode"] button,
+        [data-testid="stCodeBlock"] button,
+        [data-testid="stMarkdownContainer"] pre button,
+        button[title*="Copy"],
+        button[aria-label*="Copy"] {
+            background: #1e293b !important;
+            border: 1px solid var(--panel-border) !important;
+            color: #e7eef8 !important;
+            opacity: 1 !important;
+        }
+
+        [data-testid="stCode"] button *,
+        [data-testid="stCodeBlock"] button *,
+        [data-testid="stMarkdownContainer"] pre button *,
+        [data-testid="stCode"] button svg,
+        [data-testid="stCodeBlock"] button svg,
+        [data-testid="stMarkdownContainer"] pre button svg,
+        button[title*="Copy"] *,
+        button[aria-label*="Copy"] * {
+            color: #e7eef8 !important;
+            fill: currentColor !important;
+            stroke: currentColor !important;
+            opacity: 1 !important;
         }
 
         [data-testid="stDataFrame"],
@@ -3905,46 +3963,16 @@ def render_guardrail_cards(body: str) -> None:
     st.markdown(f'<div class="guardrail-grid">{"".join(cards)}</div>', unsafe_allow_html=True)
 
 
-def markdown_preview(body: str, *, max_lines: int = 8, max_chars: int = 900) -> tuple[str, bool]:
-    """Return a markdown-safe preview without reinterpreting the model's structure."""
-    text = str(body or "").strip()
-    if not text:
-        return "", False
-
-    lines: list[str] = []
-    char_count = 0
-    for line in text.splitlines():
-        next_count = char_count + len(line) + 1
-        if len(lines) >= max_lines or next_count > max_chars:
-            break
-        lines.append(line)
-        char_count = next_count
-
-    preview = "\n".join(lines).strip()
-    truncated = preview != text
-    if not preview:
-        preview = short_text(text, max_chars=max_chars)
-        truncated = preview != text
-    return preview, truncated
-
-
 def render_next_steps_card(body: str) -> None:
-    """Render recommendations without flattening markdown headings into fake actions."""
+    """Render recommendations as a full, non-collapsible Markdown card."""
     cleaned_body = str(body or "").strip()
     if not cleaned_body:
         return
 
-    preview, is_truncated = markdown_preview(cleaned_body)
     with st.container(border=True):
         st.markdown('<div class="ai-response-card-title">Recommended Next Steps</div>', unsafe_allow_html=True)
         st.caption("Prioritized follow-up actions from this analysis.")
-        st.markdown(preview)
-        if is_truncated:
-            st.caption("Preview only. Open the full recommendation detail below.")
-
-    if is_truncated:
-        with st.expander("Show full recommendation detail", expanded=False):
-            st.markdown(cleaned_body)
+        st.markdown(cleaned_body)
 
 
 def render_query_result_table(result: CleanedQueryResult, key_prefix: str) -> None:
@@ -3995,6 +4023,11 @@ def render_ai_response(
             continue
         if title == "Recommended Next Steps":
             render_next_steps_card(body)
+            continue
+        if title == "Evidence":
+            with st.container(border=True):
+                st.markdown(f'<div class="ai-response-card-title">{escape(title)}</div>', unsafe_allow_html=True)
+                st.markdown(body)
             continue
 
         is_long = len(body) > 1_200 or body.count("\n") > 18
