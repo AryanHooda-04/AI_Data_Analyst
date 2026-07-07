@@ -2443,6 +2443,50 @@ def inject_css() -> None:
             border-top: 3px solid var(--accent-2);
         }
 
+        div[class*="st-key-open_ai_finding_"] .stButton > button {
+            width: 100% !important;
+            min-height: 7.8rem !important;
+            height: auto !important;
+            align-items: flex-start !important;
+            justify-content: flex-start !important;
+            text-align: left !important;
+            white-space: normal !important;
+            border-radius: 10px !important;
+            border: 1px solid var(--panel-border) !important;
+            border-top: 3px solid var(--accent-2) !important;
+            background: var(--panel) !important;
+            color: var(--ink) !important;
+            padding: 0.82rem 0.9rem !important;
+            box-shadow: var(--shadow-sm) !important;
+        }
+
+        div[class*="st-key-open_ai_finding_"] .stButton > button:hover {
+            border-color: var(--accent) !important;
+            color: var(--ink) !important;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md) !important;
+        }
+
+        div[class*="st-key-open_ai_finding_"] .stButton > button p {
+            color: inherit !important;
+            white-space: pre-wrap !important;
+            overflow-wrap: anywhere;
+            text-align: left !important;
+            line-height: 1.45;
+            font-size: 0.88rem !important;
+            margin: 0 !important;
+        }
+
+        .source-focus-card {
+            background: var(--panel);
+            border: 1px solid var(--panel-border);
+            border-left: 4px solid var(--accent);
+            border-radius: 10px;
+            padding: 0.9rem 1rem;
+            margin: 0.75rem 0 1rem 0;
+            box-shadow: var(--shadow-sm);
+        }
+
         .ai-finding-title {
             color: var(--ink) !important;
             font-size: 1rem;
@@ -3279,6 +3323,9 @@ def initialize_state() -> None:
         "code_request": "",
         "pending_ai_prompt": "",
         "pending_ai_context": "",
+        "focused_ai_message_id": "",
+        "focused_ai_question": "",
+        "focused_ai_response": "",
         "analysis_history": [],
         "saved_ai_insights": [],
         "navigation": "Overview",
@@ -3318,6 +3365,9 @@ def reset_chat_if_dataset_changed(df: pd.DataFrame) -> None:
         st.session_state["code_request"] = ""
         st.session_state["pending_ai_prompt"] = ""
         st.session_state["pending_ai_context"] = ""
+        st.session_state["focused_ai_message_id"] = ""
+        st.session_state["focused_ai_question"] = ""
+        st.session_state["focused_ai_response"] = ""
         st.session_state["analysis_history"] = []
         st.session_state["saved_ai_insights"] = []
         st.session_state["pipeline_run"] = None
@@ -3560,6 +3610,9 @@ def clear_ai_chat() -> None:
     st.session_state["conversation_draft"] = ""
     st.session_state["pending_ai_prompt"] = ""
     st.session_state["pending_ai_context"] = ""
+    st.session_state["focused_ai_message_id"] = ""
+    st.session_state["focused_ai_question"] = ""
+    st.session_state["focused_ai_response"] = ""
 
 
 def reset_workspace_state() -> None:
@@ -3571,6 +3624,9 @@ def reset_workspace_state() -> None:
         "code_request": "",
         "pending_ai_prompt": "",
         "pending_ai_context": "",
+        "focused_ai_message_id": "",
+        "focused_ai_question": "",
+        "focused_ai_response": "",
         "analysis_history": [],
         "saved_ai_insights": [],
         "navigation": "Overview",
@@ -4396,26 +4452,31 @@ def parse_ai_sections(content: str) -> list[tuple[str, str]]:
 
 
 def render_guardrail_cards(body: str) -> None:
-    """Render guardrail bullets as compact trust cards."""
+    """Render guardrail bullets as compact trust cards without raw HTML."""
     lines = [line.strip(" -*") for line in str(body or "").splitlines() if line.strip(" -*")]
     if not lines:
         st.markdown(body)
         return
-    cards = []
+    items: list[tuple[str, str]] = []
     for line in lines[:6]:
         if ":" in line:
             label, value = line.split(":", 1)
         else:
             label, value = "Guardrail", line
-        cards.append(
-            f"""
-            <div class="guardrail-card">
-                <div class="guardrail-label">{escape(short_text(label, max_chars=44))}</div>
-                <div class="guardrail-value">{escape(short_text(value, max_chars=120))}</div>
-            </div>
-            """
+        items.append(
+            (
+                plain_text(short_text(label, max_chars=44)),
+                plain_text(short_text(value, max_chars=120)),
+            )
         )
-    st.markdown(f'<div class="guardrail-grid">{"".join(cards)}</div>', unsafe_allow_html=True)
+    for start in range(0, len(items), 2):
+        row_items = items[start : start + 2]
+        cols = st.columns(len(row_items))
+        for idx, (label, value) in enumerate(row_items):
+            with cols[idx]:
+                with st.container(border=True):
+                    st.caption(label)
+                    st.markdown(f"**{value}**")
 
 
 def render_next_steps_card(body: str) -> None:
@@ -4547,6 +4608,9 @@ def save_analysis_artifacts(
     question: str,
     response: str,
     result: CleanedQueryResult | None = None,
+    *,
+    user_message_id: str = "",
+    assistant_message_id: str = "",
 ) -> None:
     """Save reusable AI insights and analysis history for workspace recall."""
     history = st.session_state.setdefault("analysis_history", [])
@@ -4557,6 +4621,8 @@ def save_analysis_artifacts(
             "summary": short_text(section_body(response, "Summary") or response, max_chars=220),
             "rows": result.row_count if result else None,
             "mode": result.mode if result else "AI narrative",
+            "user_message_id": user_message_id,
+            "assistant_message_id": assistant_message_id,
         },
     )
     del history[12:]
@@ -4574,6 +4640,10 @@ def save_analysis_artifacts(
             "evidence": plain_text(first_nonempty_line(evidence, "Based on the active dataset profile."), max_chars=220),
             "risk": "Medium" if caveats else "Low",
             "action": plain_text(first_nonempty_line(next_steps, "Review and validate before reporting."), max_chars=170),
+            "source_user_message_id": user_message_id,
+            "source_assistant_message_id": assistant_message_id,
+            "source_question": question,
+            "source_response": response,
         },
     )
     del insights[8:]
@@ -4610,44 +4680,57 @@ def render_saved_analysis_history() -> None:
         )
 
 
+def open_saved_ai_finding(item: dict[str, object]) -> None:
+    """Navigate to Conversation AI and spotlight the source turn for a saved finding."""
+    st.session_state["focused_ai_message_id"] = str(item.get("source_assistant_message_id", ""))
+    st.session_state["focused_ai_question"] = str(item.get("source_question", ""))
+    st.session_state["focused_ai_response"] = str(item.get("source_response", ""))
+    st.session_state["navigation"] = "Conversation AI"
+    st.rerun()
+
+
 def render_saved_ai_insight_cards() -> None:
-    """Render reusable AI-generated insight cards."""
+    """Render reusable AI-generated findings as navigation actions."""
     insights = st.session_state.get("saved_ai_insights", [])
     if not insights:
         return
     visible_insights = insights[:4]
-    cards = []
-    for item in visible_insights:
-        metric = plain_text(item.get("metric", "AI finding"), max_chars=48)
-        title = plain_text(item.get("title", "Saved finding"), max_chars=120)
-        evidence = plain_text(item.get("evidence", "Based on the active dataset."), max_chars=230)
-        risk = plain_text(item.get("risk", "Low"), max_chars=24)
-        action = plain_text(item.get("action", "Review before reporting."), max_chars=180)
-        cards.append(
-            '<article class="ai-finding-card">'
-            f'<div class="ai-finding-label">{escape(metric)}</div>'
-            f'<div class="ai-finding-title">{escape(title)}</div>'
-            f'<div class="ai-finding-evidence">{escape(evidence)}</div>'
-            '<div class="ai-finding-footer">'
-            f'<span class="risk-pill">Risk: {escape(risk)}</span>'
-            f'<div class="ai-finding-action">{escape(action)}</div>'
-            "</div>"
-            "</article>"
-        )
     render_html(
         f"""
         <div class="ai-findings-header">
             <div>
                 <div class="ai-findings-title">Saved AI Findings</div>
-                <div class="ai-findings-subtitle">Reusable conclusions from the latest Conversation AI analyses.</div>
+                <div class="ai-findings-subtitle">Click a finding to open the Conversation AI turn that created it.</div>
             </div>
             <span class="executive-panel-count">{len(visible_insights)} shown</span>
         </div>
-        <div class="ai-findings-grid">
-            {''.join(cards)}
-        </div>
         """
     )
+    for start in range(0, len(visible_insights), 2):
+        row_items = visible_insights[start : start + 2]
+        cols = st.columns(len(row_items))
+        for offset, item in enumerate(row_items):
+            idx = start + offset
+            metric = plain_text(item.get("metric", "AI finding"), max_chars=48)
+            title = plain_text(item.get("title", "Saved finding"), max_chars=130)
+            evidence = plain_text(item.get("evidence", "Based on the active dataset."), max_chars=180)
+            risk = plain_text(item.get("risk", "Low"), max_chars=24)
+            action = plain_text(item.get("action", "Open the source conversation."), max_chars=150)
+            button_label = (
+                f"{metric.upper()}\n\n"
+                f"{title}\n\n"
+                f"{evidence}\n\n"
+                f"Risk: {risk} | Open source conversation"
+            )
+            with cols[offset]:
+                with st.container(key=f"open_ai_finding_{idx}"):
+                    if st.button(
+                        button_label,
+                        key=f"open_ai_finding_button_{idx}_{item.get('source_assistant_message_id', idx)}",
+                        width="stretch",
+                        help=action,
+                    ):
+                        open_saved_ai_finding(item)
 
 
 def render_quality_score_explanation(df: pd.DataFrame) -> None:
@@ -5180,6 +5263,10 @@ def submit_conversation_message(df: pd.DataFrame, question: str, *, extra_contex
     if not demo_guard_allows("Conversation AI", model_question, ask_output_tokens()):
         return False
 
+    st.session_state["focused_ai_message_id"] = ""
+    st.session_state["focused_ai_question"] = ""
+    st.session_state["focused_ai_response"] = ""
+
     messages = st.session_state.setdefault("ai_messages", [])
     user_message_id = f"user_{len(messages)}"
     messages.append({"role": "user", "content": question, "id": user_message_id})
@@ -5227,7 +5314,13 @@ def submit_conversation_message(df: pd.DataFrame, question: str, *, extra_contex
                     "query_result": query_result,
                 }
             )
-            save_analysis_artifacts(question, response, query_result)
+            save_analysis_artifacts(
+                question,
+                response,
+                query_result,
+                user_message_id=user_message_id,
+                assistant_message_id=assistant_message_id,
+            )
             record_demo_usage("Conversation AI", question, response, ask_output_tokens())
             if st.session_state.get("voice_output_enabled"):
                 with st.spinner("Generating voice response..."):
@@ -5249,6 +5342,39 @@ def submit_conversation_message(df: pd.DataFrame, question: str, *, extra_contex
             st.error(str(exc))
             return False
     return True
+
+
+def render_focused_ai_source(messages: list[dict[str, object]]) -> None:
+    """Render the source conversation for a clicked saved finding."""
+    focused_id = str(st.session_state.get("focused_ai_message_id", "") or "")
+    focused_question = str(st.session_state.get("focused_ai_question", "") or "")
+    focused_response = str(st.session_state.get("focused_ai_response", "") or "")
+    if not (focused_id or focused_question or focused_response):
+        return
+
+    source_message = next((message for message in messages if str(message.get("id", "")) == focused_id), None)
+    source_response = str(source_message.get("content", "")) if source_message else focused_response
+    source_result = source_message.get("query_result") if source_message else None
+
+    with st.container(border=True):
+        st.caption("Source conversation from Saved AI Findings")
+        if focused_question:
+            st.markdown("**Question**")
+            st.markdown(focused_question)
+        if source_response:
+            st.markdown("**Assistant response**")
+            render_ai_response(
+                source_response,
+                result=source_result if isinstance(source_result, CleanedQueryResult) else None,
+                key_prefix=f"focused_{focused_id or abs(hash(source_response))}",
+            )
+        else:
+            st.info("This finding was saved before source linking was available. New saved findings will open the exact source answer.")
+        if st.button("Clear source focus", key="clear_focused_ai_source", width="stretch"):
+            st.session_state["focused_ai_message_id"] = ""
+            st.session_state["focused_ai_question"] = ""
+            st.session_state["focused_ai_response"] = ""
+            st.rerun()
 
 
 def render_conversation_ai(
@@ -5281,6 +5407,7 @@ def render_conversation_ai(
     messages = st.session_state.setdefault("ai_messages", [])
     if not messages:
         render_conversation_empty_state()
+    render_focused_ai_source(messages)
 
     for message in messages:
         role = str(message.get("role", "assistant"))
