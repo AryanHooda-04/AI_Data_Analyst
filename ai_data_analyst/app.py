@@ -2233,6 +2233,18 @@ def inject_css() -> None:
             padding: 0.72rem 0.78rem;
         }
 
+        .context-card {
+            min-height: 4.9rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 0.45rem;
+            border-top: 2px solid var(--accent);
+            background:
+                linear-gradient(135deg, rgba(56, 189, 248, 0.08), transparent 58%),
+                var(--panel);
+        }
+
         .context-label,
         .guardrail-label,
         .quality-score-label,
@@ -2256,6 +2268,10 @@ def inject_css() -> None:
             font-size: 0.94rem;
             font-weight: 760;
             line-height: 1.28;
+        }
+
+        .context-value {
+            overflow-wrap: anywhere;
         }
 
         .guardrail-value,
@@ -4075,12 +4091,14 @@ def render_current_analysis_context(
     with st.container(border=True, key="analysis_context_bar"):
         st.markdown("**Current Analysis Context**")
         st.caption("This is the exact dataset view used for AI answers and SQL execution.")
-        cols = st.columns(len(cards))
-        for idx, (label, value) in enumerate(cards):
-            with cols[idx]:
-                with st.container(border=True):
-                    st.caption(label)
-                    st.markdown(f"**{value}**")
+        card_markup = "".join(
+            '<div class="context-card">'
+            f'<div class="context-label">{escape(label)}</div>'
+            f'<div class="context-value">{escape(str(value))}</div>'
+            "</div>"
+            for label, value in cards
+        )
+        render_html(f'<div class="analysis-context-grid">{card_markup}</div>')
 
 
 def render_table_workspace(
