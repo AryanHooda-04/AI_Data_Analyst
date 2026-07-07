@@ -2459,7 +2459,7 @@ def inject_css() -> None:
             border-top: 3px solid var(--accent-2);
         }
 
-        div[class*="st-key-open_ai_finding_"] .stButton > button {
+        div[class*="st-key-open_ai_finding"] button {
             width: 100% !important;
             min-height: 7.8rem !important;
             height: auto !important;
@@ -2470,27 +2470,46 @@ def inject_css() -> None:
             border-radius: 10px !important;
             border: 1px solid var(--panel-border) !important;
             border-top: 3px solid var(--accent-2) !important;
-            background: var(--panel) !important;
+            background:
+                linear-gradient(135deg, rgba(56, 189, 248, 0.08), transparent 58%),
+                var(--panel) !important;
             color: var(--ink) !important;
             padding: 0.82rem 0.9rem !important;
             box-shadow: var(--shadow-sm) !important;
+            text-shadow: none !important;
         }
 
-        div[class*="st-key-open_ai_finding_"] .stButton > button:hover {
+        div[class*="st-key-open_ai_finding"] button:hover,
+        div[class*="st-key-open_ai_finding"] button:focus,
+        div[class*="st-key-open_ai_finding"] button:focus-visible,
+        div[class*="st-key-open_ai_finding"] button:active,
+        div[class*="st-key-open_ai_finding"] button:disabled,
+        div[class*="st-key-open_ai_finding"] button[disabled] {
+            background:
+                linear-gradient(135deg, rgba(56, 189, 248, 0.13), transparent 58%),
+                var(--panel-soft) !important;
+            background-color: var(--panel-soft) !important;
             border-color: var(--accent) !important;
             color: var(--ink) !important;
             transform: translateY(-1px);
             box-shadow: var(--shadow-md) !important;
+            outline: 2px solid rgba(56, 189, 248, 0.24) !important;
+            outline-offset: 2px !important;
+            opacity: 1 !important;
         }
 
-        div[class*="st-key-open_ai_finding_"] .stButton > button p {
-            color: inherit !important;
+        div[class*="st-key-open_ai_finding"] button *,
+        div[class*="st-key-open_ai_finding"] button p,
+        div[class*="st-key-open_ai_finding"] button span,
+        div[class*="st-key-open_ai_finding"] button div {
+            color: var(--ink) !important;
             white-space: pre-wrap !important;
             overflow-wrap: anywhere;
-            text-align: left !important;
+            text-align: inherit !important;
             line-height: 1.45;
             font-size: 0.88rem !important;
             margin: 0 !important;
+            text-shadow: none !important;
         }
 
         .source-focus-card {
@@ -4733,7 +4752,6 @@ def render_saved_ai_insight_cards() -> None:
             title = plain_text(item.get("title", "Saved finding"), max_chars=130)
             evidence = plain_text(item.get("evidence", "Based on the active dataset."), max_chars=180)
             risk = plain_text(item.get("risk", "Low"), max_chars=24)
-            action = plain_text(item.get("action", "Open the source conversation."), max_chars=150)
             button_label = (
                 f"{metric.upper()}\n\n"
                 f"{title}\n\n"
@@ -4746,7 +4764,6 @@ def render_saved_ai_insight_cards() -> None:
                         button_label,
                         key=f"open_ai_finding_button_{idx}_{item.get('source_assistant_message_id', idx)}",
                         width="stretch",
-                        help=action,
                     ):
                         open_saved_ai_finding(item)
 
